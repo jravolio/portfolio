@@ -79,18 +79,24 @@ body{
 
 
 /* =================================== NAV ========================================= */
+
+header{
+    position: fixed;
+}
+
 nav{
     display: flex;
     justify-content: space-around;
     align-items: center;
     background-color: var(--body-color-alt);
-    height: 8vh;
+    height: 5vh;
+    width: 100vw;
 }
+
 
 .nav-list{
     list-style: none;
     display: flex;
-    z-index: 1;
 }
 
 .nav-list li{
@@ -98,6 +104,17 @@ nav{
     margin-left: 32px;
 }
 
+.nav-list li a{
+    font-size: 1rem;
+    transition: color 0.3s;
+}
+
+.nav-list li a:hover{
+    color: var(--highlight-color-alt);
+}
+.logo{
+    font-size: 1.5rem;
+}
 .mobile-menu{
     display: none;
     cursor: pointer;
@@ -122,10 +139,10 @@ nav{
     .nav-list{
         position: absolute;
         background-color: var(--body-color-alt);
-        top: 8vh;
+        top: 2.5rem; /* 2.5rem */ /* 8vh */
         right: 0;
         width: 100vw;
-        height: 92vh;
+        height: 100vh; /* 100vh */ /* 92vh */
         flex-direction: column;
         align-items: center;
         justify-content: space-around;
@@ -136,6 +153,11 @@ nav{
     .nav-list li{
         margin-left: 0;
         opacity: 0;
+    }
+    
+    .nav-list li a,
+    .logo{
+        font-size: var(--title-font-size);
     }
 
     .mobile-menu{
@@ -168,6 +190,10 @@ nav{
 }
 
 /* ================================ HOME ======================================= */
+
+#home{
+    padding-top: 5rem;
+}
 
 #home .container {
     margin: 0;
@@ -211,6 +237,7 @@ nav{
     display: block;
     margin-left: auto;
     margin-right: auto;
+    z-index: -1;
 }
 
 .avatar > img {
