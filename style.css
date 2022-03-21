@@ -1,0 +1,222 @@
+/* =================== RESETAR PAG ================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+ul{
+    list-style: none;
+}
+
+a{
+    text-decoration: none;
+}
+
+/* ============================= variáveis ========================= */
+:root{
+    --body-color: hsl(0, 0%, 9%, 1);
+    --body-color-alt: hsl(0, 0%, 7%, 1);
+    --title-color: hsl(0, 0%, 98%, 1);
+    --highlight-color: hsl(270, 83%, 55%, 1);
+    --highlight-color-alt: hsl(270, 83%, 65%, 1);
+    --text-color: hsla(0, 0%, 95%, 1);
+
+
+    
+    /* fonts */
+    --title-font-size:1.875rem;
+    --subtitle-font-size: 1rem;
+    
+    --title-font: 'Poppins', sans-serif;
+    --body-font: "DM Sans", sans-serif;
+}
+
+/* ================================== base ===================================== */
+
+body{
+    font: 400 1rem var(--body-font);
+    color: var(--text-color);
+    background: var(--body-color);
+    -webkit-font-smoothing: antialiased;
+}
+
+.title{
+    font: 700 var(--title-font-size) var(--title-font);
+    color: var(--title-color);
+    -webkit-font-smoothing: auto;
+}
+
+
+
+
+/* ================================ LAYOUT ========================================= */
+.container{
+    margin-left: 1.5rem;
+    margin-right: 1.5rem;
+}
+
+.button {
+    background-color: var(--highlight-color);
+    color: var(--text-color-light);
+    height: 3.5rem;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 2rem;
+    border-radius: 0.25rem;
+    font: 500 1rem var(--body-font);
+    transition: background 0.3s;
+}
+
+.button:hover{
+    background-color: var(--highlight-color-alt);
+}
+
+.grid{
+    display: grid;
+    gap: 2rem;
+}
+
+
+/* =================================== NAV ========================================= */
+nav{
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background-color: var(--body-color-alt);
+    height: 8vh;
+}
+
+.nav-list{
+    list-style: none;
+    display: flex;
+    z-index: 1;
+}
+
+.nav-list li{
+    letter-spacing: 3px;
+    margin-left: 32px;
+}
+
+.mobile-menu{
+    display: none;
+    cursor: pointer;
+}
+
+.mobile-menu div{
+    width: 32px;
+    height: 2px;
+    background: #f2f2f2;
+    margin: 8px;
+    transition: 0.3s;
+}
+
+
+
+@media(max-width: 999px){
+    body{
+        overflow-x: hidden;
+    }
+    
+
+    .nav-list{
+        position: absolute;
+        background-color: var(--body-color-alt);
+        top: 8vh;
+        right: 0;
+        width: 100vw;
+        height: 92vh;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-around;
+        transform: translateX(100%);
+        transition: transform 0.3s ease-in;
+    }
+    
+    .nav-list li{
+        margin-left: 0;
+        opacity: 0;
+    }
+
+    .mobile-menu{
+        display: block;
+    }
+
+    .nav-list.active{
+        transform: translateX(0);
+    }
+
+    @keyframes navLinkFade {
+        from {
+            opacity: 0;
+            transform: translateX(50px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    .mobile-menu.active .line1{
+        transform: rotate(-45deg) translate(-8px, 8px);
+    }
+    .mobile-menu.active .line2{
+        opacity: 0;
+    }
+    .mobile-menu.active .line3{
+        transform: rotate(45deg) translate(-5px, -7px);
+    }
+}
+
+/* ================================ HOME ======================================= */
+
+#home .container {
+    margin: 0;
+}
+
+#home .text {
+    margin-left: 1.5rem;
+    margin-right: 1.5rem;
+    text-align: center;
+}
+
+#home .text h2{
+    color: var(--highlight-color);
+}
+
+#home .icons{
+    grid-auto-flow: column;
+    width: fit-content;
+    margin-top: 2.125rem;
+    font-size: 2rem;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#home .icons i{
+    color: var(--highlight-color);
+    transition: color 0.3s;
+}
+
+#home .icons i:hover{
+    color: var(--highlight-color-alt);
+}
+
+#home .button{
+    margin-top: 4rem;
+    font-size: 1.5rem;
+}
+
+.avatar{
+    width: 13rem;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.avatar > img {
+    width: 13.375rem;
+    height: 13.375rem;
+    object-fit: cover;
+  
+    clip-path: circle();
+  }
