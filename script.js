@@ -42,3 +42,19 @@ class MobileNavbar {
     ".nav-list li",
   );
   mobileNavbar.init();
+
+// close menu
+const links = document.querySelectorAll('nav ul li a')
+const navDiv = document.querySelector('.navbar div')
+const ul = document.querySelector('.navbar ul.nav-list')
+const liAnimation = document.querySelectorAll('.navbar ul.nav-list li')
+
+for (const link of links){
+  link.addEventListener('click', function(){
+    navDiv.classList.remove('active')
+    ul.classList.remove('active')
+    for(const li of liAnimation){
+      li.removeAttribute("style")
+    }
+    })
+}

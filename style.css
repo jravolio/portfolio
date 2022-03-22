@@ -34,6 +34,10 @@ a{
 
 /* ================================== base ===================================== */
 
+html {
+    scroll-behavior: smooth;
+}
+
 body{
     font: 400 1rem var(--body-font);
     color: var(--text-color);
@@ -56,6 +60,10 @@ body{
     margin-right: 1.5rem;
 }
 
+.section{
+    margin-bottom: 5.75rem;
+}
+
 .button {
     background-color: var(--highlight-color);
     color: var(--text-color-light);
@@ -76,6 +84,13 @@ body{
     display: grid;
     gap: 2rem;
 }
+
+.text {
+    margin-left: 1.5rem;
+    margin-right: 1.5rem;
+    text-align: center;
+}
+
 
 
 /* =================================== NAV ========================================= */
@@ -139,7 +154,7 @@ nav{
     .nav-list{
         position: absolute;
         background-color: var(--body-color-alt);
-        top: 2.5rem; /* 2.5rem */ /* 8vh */
+        top: 4vh; /* 2.5rem */ /* 8vh */ /* TIVE QUE MUDAR POIS PRECISAVA SE AJUSTAR DE ACORDO COM A WIDTH QUE EU PUS NA HEADER */ /* 4vh pois na header o top é de 5vh */
         right: 0;
         width: 100vw;
         height: 100vh; /* 100vh */ /* 92vh */
@@ -199,11 +214,6 @@ nav{
     margin: 0;
 }
 
-#home .text {
-    margin-left: 1.5rem;
-    margin-right: 1.5rem;
-    text-align: center;
-}
 
 #home .text h2{
     color: var(--highlight-color);
@@ -248,3 +258,70 @@ nav{
   
     clip-path: circle();
   }
+
+  /* ============================ ABOUT ============================================= */
+
+  .skills-list{
+    margin-top: 2rem;
+    margin-left: 30%;
+    font-size: 1.5rem;
+    justify-content: space-between;
+  }
+
+
+  .skills{
+      list-style: circle;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(140px, 200px));
+  }
+
+  /* ============================== EXPERIENCE/CARDS ========================== */
+
+#experience h1.title{
+    margin-bottom: 1rem;
+}
+
+#experience .titles{
+    margin-bottom: 1.5rem;
+}
+
+#experience h3.subtitle{
+    font: 500 1rem "DM Sans", sans-serif;
+    color: #9E9E9E;
+}
+
+.cards .grid{
+    gap: 1.5rem;
+}
+
+
+.card{
+    margin-top: 5rem;
+    padding: 3.625rem 1rem;
+    border-bottom: 0.25rem solid var(--highlight-color);
+    border-radius: 0.25rem 0.25rem 0 0;
+    text-align: center;
+    display: inline-block;
+    transition: 0.3s;
+    border-radius: 48px;
+    background: linear-gradient(145deg, #191919, #151515);
+    box-shadow:  17px 17px 34px #0d0d0d,
+             -17px -17px 34px #212121;
+    text-align: center;
+}
+
+.card i {
+    display: block;
+    margin-bottom: 1.5rem;
+    font-size: 5rem;
+    color: var(--base-color);
+}
+.card .title {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+
+.card h3.title{
+    margin-bottom: 0;
+}
