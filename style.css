@@ -38,6 +38,10 @@ html {
     scroll-behavior: smooth;
 }
 
+header{
+    z-index: 100;
+}
+
 body{
     font: 400 1rem var(--body-font);
     color: var(--text-color);
@@ -91,7 +95,10 @@ body{
     text-align: center;
 }
 
-
+.subtitle{
+    font: 500 1rem "DM Sans", sans-serif;
+    color: #9E9E9E;
+}
 
 /* =================================== NAV ========================================= */
 
@@ -146,6 +153,7 @@ nav{
 
 
 @media(max-width: 999px){
+
     body{
         overflow-x: hidden;
     }
@@ -285,10 +293,7 @@ nav{
     margin-bottom: 1.5rem;
 }
 
-#experience h3.subtitle{
-    font: 500 1rem "DM Sans", sans-serif;
-    color: #9E9E9E;
-}
+
 
 .cards .grid{
     gap: 1.5rem;
@@ -325,3 +330,124 @@ nav{
 .card h3.title{
     margin-bottom: 0;
 }
+
+
+/* Project 
+
+.menuOverlayFix{
+    display: none;
+
+}
+*/
+/*============================ SWIPER  ============================*/
+
+
+.swiper-container h1{
+    margin-bottom: 3rem;
+    z-index: -5;
+}
+
+.swiper-slide {
+    height: auto;
+    padding: 4rem 1rem;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.swiper-slide blockquote{
+    padding: 2rem;
+    border-radius: 48px;
+    border-radius: 48px;
+    background: linear-gradient(145deg, #191919, #151515);
+    box-shadow:  5px 5px 10px #0d0d0d,
+                 -5px -5px 10px #212121;
+}
+
+.swiper-slide p{
+    margin-bottom: 2rem;
+}
+
+.swiper-slide a{
+    color: var(--highlight-color);
+    font-size: 1.25rem;
+}
+  
+  .swiper-pagination-bullet {
+    width: 0.75rem;
+    height: 0.75rem;
+    background-color: var(--text-color);
+  }
+  
+  .swiper-pagination-bullet-active {
+    background-color: var(--text-color);
+  }
+  /* =========================== Education ========================== */
+  #education h1.title{
+      margin-bottom: 4.3rem;
+  }
+  .exterior-line{
+      border-radius: 10px;
+      padding: 35px;
+      border: 2px solid var(--highlight-color);
+  }
+  .education-cards{
+      margin-left: 4.5rem;
+      margin-right: 4.5rem;
+      margin-bottom: 4rem;
+  }
+
+  .education-cards h1{
+      font-size: 1.5rem;
+  }
+
+  .education-cards h2{
+      font-size: 1.125rem;
+      color: var(--highlight-color);
+  }
+  .education-cards p{
+      font-weight: 300;
+      margin-top: 2rem;
+      color: var(--text-color)
+  }
+  .education-cards p.subtitle{
+      color: #9E9E9E;
+  }
+
+  /* ========================= FOOTER ===================================== */
+  footer{
+      background-color: var(--highlight-color);
+      padding-bottom: 2rem;
+      padding-top: 1.5rem;
+  }
+
+  footer h2{
+      margin-bottom: 1rem;
+      font-size: 2.2rem;
+  }
+
+  footer a,
+  footer h2{
+      color: black;
+  }
+
+  footer .container a{
+      font-size: 1.4rem;
+      text-decoration: underline;
+  }
+
+  .social-grid{
+    grid-auto-flow: column;
+    width: fit-content;
+    gap: 1.2rem;
+  }
+  .social-grid a i{
+    display: inline-block;
+    font-size: 1.3rem;
+    transition: 0.4s;
+    color: var(--body-color-alt);
+    margin-left: 0.3rem;
+    margin-bottom: 1rem;
+}
+  .social-grid a i:hover{
+    transform: translateY(-8px);
+  }
