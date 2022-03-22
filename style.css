@@ -218,12 +218,13 @@ nav{
     margin-right: auto;
 }
 
-#home .icons i{
+#home .icons a{
     color: var(--highlight-color);
-    transition: color 0.3s;
+    transition: 0.3s;
 }
 
-#home .icons i:hover{
+#home .icons a:hover{
+    transform: translateY(-8px);
     color: var(--highlight-color-alt);
 }
 
