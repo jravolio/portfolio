@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'icomoon';
-  src:  url('fonts/icomoon.eot?a77hvw');
-  src:  url('fonts/icomoon.eot?a77hvw#iefix') format('embedded-opentype'),
-    url('fonts/icomoon.ttf?a77hvw') format('truetype'),
-    url('fonts/icomoon.woff?a77hvw') format('woff'),
-    url('fonts/icomoon.svg?a77hvw#icomoon') format('svg');
+  src:  url('fonts/icomoon.eot?7c8mju');
+  src:  url('fonts/icomoon.eot?7c8mju#iefix') format('embedded-opentype'),
+    url('fonts/icomoon.ttf?7c8mju') format('truetype'),
+    url('fonts/icomoon.woff?7c8mju') format('woff'),
+    url('fonts/icomoon.svg?7c8mju#icomoon') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -25,6 +25,28 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-flask:before {
+  content: "\e90a";
+}
+.icon-django:before {
+  content: "\e903";
+}
+.icon-python:before {
+  content: "\e904";
+  color: #3776ab;
+}
+.icon-javascript:before {
+  content: "\e906";
+  color: #f7df1e;
+}
+.icon-css3:before {
+  content: "\e908";
+  color: #1572b6;
+}
+.icon-html5:before {
+  content: "\e909";
+  color: #e34f26;
+}
 .icon-servers:before {
   content: "\e902";
 }
