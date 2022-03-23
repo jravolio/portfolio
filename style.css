@@ -261,6 +261,29 @@ nav {
     position: relative;
     display: inline-block;
 }
+#about blockquote.html-color{
+    border-bottom: 0.25rem solid hsl(13, 77%, 52%);
+}
+
+#about blockquote.css-color{
+    border-bottom: 0.25rem solid hsl(205, 79%, 40%);
+}
+
+#about blockquote.javascript-color{
+    border-bottom: 0.25rem solid hsl(53, 93%, 54%);
+}
+
+#about blockquote.python-color{
+    border-bottom: 0.25rem solid hsl(207, 51%, 44%);
+}
+
+#about blockquote.django-color{
+    border-bottom: 0.25rem solid hsl(0, 0%, 95%);
+}
+
+#about blockquote.flask-color{
+    border-bottom: 0.25rem solid hsl(0, 0%, 95%);
+}
 
 #about blockquote i{
     font-size: 4rem;
