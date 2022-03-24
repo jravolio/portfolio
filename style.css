@@ -257,35 +257,35 @@ nav {
 }
 
 /* ============================ ABOUT ============================================= */
-#about blockquote{
+#home blockquote{
     position: relative;
     display: inline-block;
 }
-#about blockquote.html-color{
+#home blockquote.html-color{
     border-bottom: 0.25rem solid hsl(13, 77%, 52%);
 }
 
-#about blockquote.css-color{
+#home blockquote.css-color{
     border-bottom: 0.25rem solid hsl(205, 79%, 40%);
 }
 
-#about blockquote.javascript-color{
+#home blockquote.javascript-color{
     border-bottom: 0.25rem solid hsl(53, 93%, 54%);
 }
 
-#about blockquote.python-color{
+#home blockquote.python-color{
     border-bottom: 0.25rem solid hsl(207, 51%, 44%);
 }
 
-#about blockquote.django-color{
+#home blockquote.django-color{
     border-bottom: 0.25rem solid hsl(0, 0%, 95%);
 }
 
-#about blockquote.flask-color{
+#home blockquote.flask-color{
     border-bottom: 0.25rem solid hsl(0, 0%, 95%);
 }
 
-#about blockquote i{
+#home blockquote i{
     font-size: 4rem;
     position: absolute;
     margin-left: auto;
@@ -393,26 +393,25 @@ nav {
   padding: 35px;
   border: 2px solid var(--highlight-color);
 }
-.education-cards {
-  margin-left: 4.5rem;
-  margin-right: 4.5rem;
+.education-card {
+  margin: auto;
   margin-bottom: 4rem;
 }
 
-.education-cards h1 {
+.education-card h1 {
   font-size: 1.5rem;
 }
 
-.education-cards h2 {
+.education-card h2 {
   font-size: 1.125rem;
   color: var(--highlight-color);
 }
-.education-cards p {
+.education-card p {
   font-weight: 300;
   margin-top: 2rem;
   color: var(--text-color);
 }
-.education-cards p.subtitle {
+.education-card p.subtitle {
   color: #9e9e9e;
 }
 
@@ -453,4 +452,93 @@ footer .container a {
 }
 .social-grid a i:hover {
   transform: translateY(-8px);
+}
+
+/* Responsive */
+/* extra large devices: 1200 > */
+@media(min-width: 1200px){
+
+  /* Layout */
+  .container{
+    margin-left: 5rem;
+    margin-right: 5rem;
+  }
+
+
+  /* HOME */
+  #home .container.grid{
+    display: flex;
+    margin: 5rem 4rem;
+    text-align: right;
+  }
+
+  #home .text .button{
+    margin-top: 1.5rem;
+  }
+
+  #home .about-me{
+    margin: auto;
+  }
+
+  /* Experience */
+
+  #experience .cards{
+    display: flex;
+    justify-content: center;
+  }
+
+  /* Projects */
+  .swiper-container{
+    margin-right: 5rem;
+    margin-left: 5rem;
+  }
+
+
+  /* Education */
+  #education div.education-cards{
+    display: flex;
+    gap: 1.5rem;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+}
+
+/* large devices: 1023 > */
+@media(min-width:1023px){
+
+
+  /* HOME */
+  #home .container.grid{
+    display: flex;
+    margin: 5rem 4rem;
+    text-align: right;
+  }
+
+  #home .text .button{
+    margin-top: 1.5rem;
+  }
+
+  #home .about-me{
+    margin: auto;
+  }
+}
+
+/* large devices: 992 > */
+/* medium devices: 767 > */
+@media(min-width:767px){
+
+  .cards,
+  .education-cards{
+    margin-left: 7rem;
+    margin-right: 7rem;
+  }
+
+  p{
+    font-size: 1rem;
+  }
+
+  .about-me{
+    margin-bottom: 2rem;
+  }
 }
