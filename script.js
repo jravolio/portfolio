@@ -81,3 +81,29 @@ const swiper = new Swiper('.swiper-container',{
       }
   }
 })
+
+
+//Scroll reveal
+const scrollReveal = ScrollReveal({
+  origin:'top',
+  distance: '20px',
+  duration: 700,
+  reset: true
+})
+
+scrollReveal.reveal(`#home .avatar, #home .text, #home .about-me, #home .swiper-container,
+#experience h1 .title, #experience .card,
+#projects,
+#education h1.title, #education .education-card,
+footer`, 
+{interval:100})
+
+// BACK TO TOP
+window.addEventListener('scroll', function(){
+  const backToTopButton = document.querySelector('.back-to-top')
+      if(window.scrollY >= 560) {
+          backToTopButton.classList.add('show')
+      }
+      else{
+          backToTopButton.classList.remove('show')
+      }})
