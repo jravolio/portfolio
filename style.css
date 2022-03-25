@@ -257,46 +257,44 @@ nav {
 }
 
 /* ============================ ABOUT ============================================= */
-#home blockquote{
-    position: relative;
-    display: inline-block;
+#home blockquote {
+  position: relative;
+  display: inline-block;
 }
-#home blockquote.html-color{
-    border-bottom: 0.25rem solid hsl(13, 77%, 52%);
-}
-
-#home blockquote.css-color{
-    border-bottom: 0.25rem solid hsl(205, 79%, 40%);
+#home blockquote.html-color {
+  border-bottom: 0.25rem solid hsl(13, 77%, 52%);
 }
 
-#home blockquote.javascript-color{
-    border-bottom: 0.25rem solid hsl(53, 93%, 54%);
+#home blockquote.css-color {
+  border-bottom: 0.25rem solid hsl(205, 79%, 40%);
 }
 
-#home blockquote.python-color{
-    border-bottom: 0.25rem solid hsl(207, 51%, 44%);
+#home blockquote.javascript-color {
+  border-bottom: 0.25rem solid hsl(53, 93%, 54%);
 }
 
-#home blockquote.django-color{
-    border-bottom: 0.25rem solid hsl(0, 0%, 95%);
+#home blockquote.python-color {
+  border-bottom: 0.25rem solid hsl(207, 51%, 44%);
 }
 
-#home blockquote.flask-color{
-    border-bottom: 0.25rem solid hsl(0, 0%, 95%);
+#home blockquote.django-color {
+  border-bottom: 0.25rem solid hsl(0, 0%, 95%);
 }
 
-#home blockquote i{
-    font-size: 4rem;
-    position: absolute;
-    margin-left: auto;
-    margin-right: auto;
-    left: 0;
-    right: 0.625rem;
-    top: -2.5rem;
-    text-align: center;
+#home blockquote.flask-color {
+  border-bottom: 0.25rem solid hsl(0, 0%, 95%);
 }
 
-
+#home blockquote i {
+  font-size: 4rem;
+  position: absolute;
+  margin-left: auto;
+  margin-right: auto;
+  left: 0;
+  right: 0.625rem;
+  top: -2.5rem;
+  text-align: center;
+}
 
 /* ============================== EXPERIENCE/CARDS ========================== */
 
@@ -342,7 +340,6 @@ nav {
 }
 
 /* Project */
-
 
 /*============================ SWIPER  ============================*/
 
@@ -457,7 +454,7 @@ footer .container a {
 
 /* ================================== BACK TO TOP ============================================ */
 
-.back-to-top{
+.back-to-top {
   background: var(--highlight-color);
   color: var(--text-color-light);
 
@@ -475,100 +472,97 @@ footer .container a {
   opacity: 0;
 
   transition: 0.3s;
-  transform: translateY(100%); /* transform para mexer os 2 transform se conectam */
+  transform: translateY(
+    100%
+  ); /* transform para mexer os 2 transform se conectam */
 }
 
-.back-to-top.show{
+.back-to-top.show {
   visibility: visible;
   opacity: 1;
-  transform: translateY(0); /* transform para mexer os 2 transform se conectam */
+  transform: translateY(
+    0
+  ); /* transform para mexer os 2 transform se conectam */
 }
 
 /* Responsive */
 /* extra large devices: 1200 > */
-@media(min-width: 1200px){
-
+@media (min-width: 1200px) {
   /* Layout */
-  .container{
+  .container {
     margin-left: 5rem;
     margin-right: 5rem;
   }
 
-
   /* HOME */
-  #home .container.grid{
+  #home .container.grid {
     display: flex;
     margin: 5rem 4rem;
     text-align: right;
   }
 
-  #home .text .button{
+  #home .text .button {
     margin-top: 1.5rem;
   }
 
-  #home .about-me{
+  #home .about-me {
     margin: auto;
   }
 
   /* Experience */
 
-  #experience .cards{
+  #experience .cards {
     display: flex;
     justify-content: center;
   }
 
   /* Projects */
-  .swiper-container{
+  .swiper-container {
     margin-right: 5rem;
     margin-left: 5rem;
   }
 
-
   /* Education */
-  #education div.education-cards{
+  #education div.education-cards {
     display: flex;
     gap: 1.5rem;
     margin-left: 0;
     margin-right: 0;
   }
-
 }
 
 /* large devices: 1023 > */
-@media(min-width:1023px){
-
-
+@media (min-width: 1023px) {
   /* HOME */
-  #home .container.grid{
+  #home .container.grid {
     display: flex;
     margin: 5rem 4rem;
     text-align: right;
   }
 
-  #home .text .button{
+  #home .text .button {
     margin-top: 1.5rem;
   }
 
-  #home .about-me{
+  #home .about-me {
     margin: auto;
   }
 }
 
 /* large devices: 992 > */
 /* medium devices: 767 > */
-@media(min-width:767px){
-
+@media (min-width: 767px) {
   .cards,
-  .education-cards{
+  .education-cards {
     margin-left: 7rem;
     margin-right: 7rem;
   }
 
-  p{
+  p {
     font-size: 1rem;
   }
 
-  .about-me{
+  .about-me {
     margin-bottom: 2rem;
   }
 }
