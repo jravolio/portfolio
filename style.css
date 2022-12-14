@@ -273,6 +273,10 @@ nav {
   border-bottom: 0.25rem solid hsl(53, 93%, 54%);
 }
 
+#home blockquote.react-color {
+  border-bottom: 0.25rem solid hsl(193, 95%, 68%);
+}
+
 #home blockquote.python-color {
   border-bottom: 0.25rem solid hsl(207, 51%, 44%);
 }

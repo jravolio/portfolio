@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'icomoon';
-  src:  url('fonts/icomoon.eot?7c8mju');
-  src:  url('fonts/icomoon.eot?7c8mju#iefix') format('embedded-opentype'),
-    url('fonts/icomoon.ttf?7c8mju') format('truetype'),
-    url('fonts/icomoon.woff?7c8mju') format('woff'),
-    url('fonts/icomoon.svg?7c8mju#icomoon') format('svg');
+  src:  url('fonts/icomoon.eot?re2q8c');
+  src:  url('fonts/icomoon.eot?re2q8c#iefix') format('embedded-opentype'),
+    url('fonts/icomoon.ttf?re2q8c') format('truetype'),
+    url('fonts/icomoon.woff?re2q8c') format('woff'),
+    url('fonts/icomoon.svg?re2q8c#icomoon') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -47,8 +47,9 @@
   content: "\e909";
   color: #e34f26;
 }
-.icon-servers:before {
-  content: "\e902";
+.icon-react:before {
+  content: "\e90b";
+  color: #61dafb;
 }
 .icon-arrow-up:before {
   content: "\e90c";
@@ -65,12 +66,18 @@
 .icon-menu:before {
   content: "\e907";
 }
-.icon-file-play:before {
-  content: "\e929";
+.icon-servers:before {
+  content: "\e902";
 }
 .icon-github:before {
   content: "\eab0";
 }
 .icon-linkedin:before {
   content: "\eac9";
+}
+.icon-codepen:before {
+  content: "\eae8";
+}
+.icon-tux:before {
+  content: "\eabd";
 }
