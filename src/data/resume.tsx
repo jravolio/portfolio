@@ -11,7 +11,7 @@ export const DATA = {
     "Full-stack developer focused on automation and efficiency. I love solving problems and building solutions.",
   summary:
     "Experienced full-stack developer with a strong background on task efficiency and automation. Skilled in automation using Python, React, with a track record of improving operational efficiency. Proficient in managing critical systems and networks, excelling in proactive monitoring and incident handling. Committed to excellence and adept at problem-solving.",
-  avatarUrl: "/me.jpeg",
+  avatarUrl: "/me.png",
   skills: [
     "React",
     "Django",
@@ -35,7 +35,7 @@ export const DATA = {
   ],
   navbar: [
     { href: "/", icon: HomeIcon, label: "Home" },
-    { href: "/blog", icon: NotebookIcon, label: "Blog" },
+    // { href: "/blog", icon: NotebookIcon, label: "Blog" },
   ],
   contact: {
     email: "jravolio892@gmail.com",
@@ -49,7 +49,7 @@ export const DATA = {
       },
       LinkedIn: {
         name: "LinkedIn",
-        url: "https://linkedin.com/in/jravolio",
+        url: "https://www.linkedin.com/in/julio-cesar-avolio/",
         icon: Icons.linkedin,
         navbar: true,
       },
@@ -121,7 +121,7 @@ export const DATA = {
   projects: [
     {
       title: "Transcriber AI",
-      href: "https://github.com/jravolio/transcriber-ai",
+      href: "https://github.com/jravolio/Transcriber",
       dates: "2024",
       active: true,
       description:
@@ -134,18 +134,19 @@ export const DATA = {
         "Python",
         "Docker"
       ],
+      video: "https://youtu.be/lmNhHhYfx-A",
       links: [
         {
           type: "Source",
-          href: "https://github.com/jravolio/transcriber-ai",
+          href: "https://github.com/jravolio/Transcriber",
           icon: <Icons.github className="size-3" />,
         }
       ],
-      image: "",
+      image: "/transcriber.jpeg",
     },
     {
       title: "RollSummary",
-      href: "https://github.com/jravolio/rollsummary",
+      href: "https://rollsummary.com",
       dates: "2024",
       active: true,
       description:
@@ -154,17 +155,18 @@ export const DATA = {
         "Next.js",
         "React",
         "TypeScript",
-        "ChatGPT API",
-        "Whisper API"
+        "ChatGPT",
+        "Whisper AI"
       ],
+      video: "https://youtu.be/lmNhHhYfx-A",
       links: [
         {
           type: "Source",
-          href: "https://github.com/jravolio/rollsummary",
+          href: "https://rollsummary.com",
           icon: <Icons.github className="size-3" />,
         }
       ],
-      image: "",
+      image: "/rollsummary.jpeg",
     }
   ]
 } as const;
