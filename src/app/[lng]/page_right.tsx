@@ -5,7 +5,7 @@ import { ProjectCard } from "@/components/project-card";
 import { ResumeCard } from "@/components/resume-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { DATA } from "@/data/resume";
+import { DATA_en as DATA } from "@/data/resume_en";
 import Link from "next/link";
 import Markdown from "react-markdown";
 
