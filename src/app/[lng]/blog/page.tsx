@@ -9,7 +9,7 @@ export const metadata = {
 
 const BLUR_FADE_DELAY = 0.04;
 
-export default async function BlogPage() {
+export default async function BlogPage({ params }: { params: { lng: string } }) {
   const posts = await getBlogPosts();
 
   return (
@@ -30,7 +30,7 @@ export default async function BlogPage() {
           <BlurFade delay={BLUR_FADE_DELAY * 2 + id * 0.05} key={post.slug}>
             <Link
               className="flex flex-col space-y-1 mb-4"
-              href={`/blog/${post.slug}`}
+              href={`/${params.lng}/blog/${post.slug}`}
             >
               <div className="w-full flex flex-col">
                 <p className="tracking-tight">{post.metadata.title}</p>
