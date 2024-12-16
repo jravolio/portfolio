@@ -1,0 +1,173 @@
+{
+  "name": "Julio Cesar Avolio",
+  "initials": "JA",
+  "url": "https://devjravolio.com",
+  "location": "Rio de Janeiro, Brasil",
+  "locationLink": "https://www.google.com/maps/place/riodejaneiro",
+  "description": "Desenvolvedor full-stack focado em automação e eficiência. Amo resolver problemas e construir soluções.",
+  "summary": "Desenvolvedor full-stack experiente com forte background em eficiência de tarefas e automação. Especializado em automação usando Python e React, com histórico comprovado em melhorar a eficiência operacional. Proficiente em gerenciar sistemas e redes críticas, destacando-se em monitoramento proativo e tratamento de incidentes. Comprometido com a excelência e hábil em resolução de problemas.",
+  "avatarUrl": "/static/images/me.png",
+  "skills": {
+    "title": "Habilidades",
+    "list": [
+      "React",
+      "Django",
+      "PostgreSQL",
+      "Jenkins", 
+      "UiPath",
+      "Javascript",
+      "Typescript",
+      "Flask",
+      "Linux",
+      "Docker",
+      "Python",
+      "Google Cloud Platform",
+      "Azure",
+      "Git",
+      "Next.js",
+      "FastAPI",
+      "TailwindCSS",
+      "Framer Motion",
+      "Shadcn/UI"
+    ]
+  },
+  "navbar": [
+    {
+      "href": "/",
+      "label": "Início"
+    }
+  ],
+  "contact": {
+    "label": "Contato",
+    "title": "Entre em Contato",
+    "description": "Sinta-se à vontade para me contatar no",
+    "linkedinText": "LinkedIn",
+    "linkedinUrl": "https://www.linkedin.com/in/julio-cesar-avolio/",
+    "response": "- Responderei o mais breve possível!",
+    "email": "jravolio892@gmail.com",
+    "tel": "+55 (21) 988071858",
+    "social": {
+      "GitHub": {
+        "name": "GitHub",
+        "url": "https://github.com/jravolio",
+        "navbar": true
+      },
+      "LinkedIn": {
+        "name": "LinkedIn", 
+        "url": "https://www.linkedin.com/in/julio-cesar-avolio/",
+        "navbar": true
+      },
+      "email": {
+        "name": "Enviar Email",
+        "url": "mailto:jravolio892@gmail.com",
+        "navbar": false
+      }
+    }
+  },
+  "work": {
+    "label": "Experiência",
+    "title": "Experiência Profissional",
+    "experiences": [
+      {
+        "company": "TopicTree",
+        "href": "https://topictree.com",
+        "badges": [],
+        "location": "Remoto",
+        "title": "Desenvolvedor Backend",
+        "logoUrl": "/static/images/topictree.svg",
+        "start": "Junho 2024",
+        "end": "Presente",
+        "description": "Desenvolvi e mantive infraestrutura do Google CDN, melhorando o desempenho de mídia do site. Responsável por refatorar código legado e pesquisar novas tecnologias. Desenvolvi soluções focadas em nuvem usando Google Cloud Platform (GCP)."
+      },
+      {
+        "company": "V.tal",
+        "href": "https://vtal.com",
+        "badges": [],
+        "location": "Rio de Janeiro, Brasil",
+        "title": "Desenvolvedor Full-Stack",
+        "logoUrl": "/static/images/vtal.png",
+        "start": "Agosto 2022",
+        "end": "Novembro 2023",
+        "description": "Liderei iniciativas de automação reduzindo o tempo de processo em 80%. Desenvolvi portal de integração usando React e Django para monitoramento operacional. Implementei soluções usando Python, Jenkins e UiPath."
+      },
+      {
+        "company": "Oi",
+        "href": "https://oi.com.br",
+        "badges": [],
+        "location": "Rio de Janeiro, Brasil",
+        "title": "Estagiário de Operações e Manutenção",
+        "logoUrl": "/static/images/oi.png",
+        "start": "Agosto 2021",
+        "end": "Agosto 2022",
+        "description": "Mantive ferramentas de monitoramento incluindo Grafana e Zabbix. Tratei alarmes de negócio impactando rede e servidores. Atuei como administrador Linux para resolução de incidentes."
+      }
+    ]
+  },
+  "education": {
+    "label": "Educação",
+    "title": "Formação Acadêmica",
+    "schools": [
+      {
+        "school": "Estácio de Sá",
+        "href": "https://estacio.br",
+        "degree": "Bacharelado em Ciência da Computação",
+        "logoUrl": "/static/images/estacio.png",
+        "start": "2021",
+        "end": "2025"
+      },
+      {
+        "school": "Wizard by Pearson",
+        "href": "https://wizard.com.br",
+        "degree": "Curso de Inglês",
+        "logoUrl": "/static/images/wizard.png",
+        "start": "2012",
+        "end": "2020"
+      }
+    ]
+  },
+  "projects": {
+    "label": "Projetos",
+    "title": "Projetos em Destaque",
+    "description": "Aqui estão alguns dos meus projetos em destaque que demonstram minhas habilidades e experiência.",
+    "list": [
+      {
+        "title": "Transcriber AI",
+        "href": "https://github.com/jravolio/Transcriber",
+        "dates": "2024",
+        "description": "Integrei Whisper AI com Django, utilizando Celery para gerenciamento de tarefas e Redis para mensageria, desenvolvendo uma aplicação web dinâmica e interativa para serviços de transcrição.",
+        "technologies": [
+          "Django",
+          "Celery",
+          "Redis",
+          "Whisper AI",
+          "Python",
+          "Docker"
+        ],
+        "image": "/static/images/transcriber.jpeg",
+        "links": {
+          "Código Fonte": "https://github.com/jravolio/Transcriber"
+        }
+      },
+      {
+        "title": "RollSummary",
+        "href": "https://rollsummary.com",
+        "dates": "2024",
+        "description": "Um site para resumir sessões de RPG de mesa, construído com Next.js e React usando componentes de servidor. Integra APIs do ChatGPT e Whisper para fornecer transcrições e resumos de sessões.",
+        "technologies": [
+          "Next.js",
+          "React",
+          "TypeScript",
+          "ChatGPT",
+          "Whisper AI"
+        ],
+        "image": "/static/images/rollsummary.jpeg",
+        "links": {
+          "Código Fonte": "https://rollsummary.com"
+        }
+      }
+    ]
+  },
+  "hero": {
+    "greeting": "Olá, eu sou o Julio!"
+  }
+}

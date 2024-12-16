@@ -1,29 +1,36 @@
 import Navbar from "@/components/navbar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { DATA } from "@/data/resume";
+import { DATA_en } from "@/data/resume_en";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 import { Inter as FontSans } from "next/font/google";
-import "./globals.css";
+import { dir } from 'i18next'
+import { languages } from '../i18n/settings'
+
+import "../globals.css";
 
 const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
 });
 
+export async function generateStaticParams() {
+  return languages.map((lng) => ({ lng }))
+}
+
 export const metadata: Metadata = {
-  metadataBase: new URL(DATA.url),
+  metadataBase: new URL(DATA_en.url),
   title: {
-    default: DATA.name,
-    template: `%s | ${DATA.name}`,
+    default: DATA_en.name,
+    template: `%s | ${DATA_en.name}`,
   },
-  description: DATA.description,
+  description: DATA_en.description,
   openGraph: {
-    title: `${DATA.name}`,
-    description: DATA.description,
-    url: DATA.url,
-    siteName: `${DATA.name}`,
+    title: `${DATA_en.name}`,
+    description: DATA_en.description,
+    url: DATA_en.url,
+    siteName: `${DATA_en.name}`,
     locale: "en_US",
     type: "website",
   },
@@ -39,7 +46,7 @@ export const metadata: Metadata = {
     },
   },
   twitter: {
-    title: `${DATA.name}`,
+    title: `${DATA_en.name}`,
     card: "summary_large_image",
   },
   verification: {
@@ -50,11 +57,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
+  params: {
+    lng
+  }
 }: Readonly<{
   children: React.ReactNode;
+  params: {
+    lng: string;
+  };
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={lng} dir={dir(lng)} suppressHydrationWarning>
       <body
         className={cn(
           "min-h-screen bg-background font-sans antialiased max-w-2xl mx-auto py-12 sm:py-24 px-6",
@@ -64,7 +77,7 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="light">
           <TooltipProvider delayDuration={0}>
             {children}
-            <Navbar />
+            <Navbar lng={lng} />
           </TooltipProvider>
         </ThemeProvider>
       </body>

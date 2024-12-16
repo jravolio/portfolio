@@ -1,5 +1,5 @@
 import { getBlogPosts, getPost } from "@/data/blog";
-import { DATA } from "@/data/resume";
+import { DATA_en as DATA } from "@/data/resume_en";
 import { formatDate } from "@/lib/utils";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -63,6 +63,7 @@ export default async function Blog({
   if (!post) {
     notFound();
   }
+  
 
   return (
     <section id="blog">

@@ -1,7 +1,7 @@
 import { Icons } from "@/components/icons";
 import { HomeIcon, NotebookIcon } from "lucide-react";
 
-export const DATA = {
+export const DATA_en = {
   name: "Julio Cesar Avolio",
   initials: "JA",
   url: "https://devjravolio.com",
