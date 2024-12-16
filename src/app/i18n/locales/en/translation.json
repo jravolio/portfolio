@@ -1,0 +1,171 @@
+{
+  "name": "Julio Cesar Avolio",
+  "initials": "JA", 
+  "url": "https://devjravolio.com",
+  "location": "Rio de Janeiro, Brazil",
+  "locationLink": "https://www.google.com/maps/place/riodejaneiro",
+  "description": "Full-stack developer focused on automation and efficiency. I love solving problems and building solutions.",
+  "summary": "Experienced full-stack developer with a strong background on task efficiency and automation. Skilled in automation using Python, React, with a track record of improving operational efficiency. Proficient in managing critical systems and networks, excelling in proactive monitoring and incident handling. Committed to excellence and adept at problem-solving.",
+  "avatarUrl": "/static/images/me.png",
+  "skills": {
+    "title": "Skills",
+    "list": [
+      "React",
+      "Django", 
+      "PostgreSQL",
+      "Jenkins",
+      "UiPath",
+      "Javascript",
+      "Typescript",
+      "Flask",
+      "Linux",
+      "Docker",
+      "Python",
+      "Google Cloud Platform",
+      "Azure",
+      "Git",
+      "Next.js",
+      "FastAPI",
+      "TailwindCSS",
+      "Framer Motion",
+      "Shadcn/UI"
+    ]
+  },
+  "navbar": [
+    {
+      "href": "/",
+      "label": "Home"
+    }
+  ],
+  "contact": {
+    "label": "Contact",
+    "title": "Get in Touch",
+    "description": "Feel free to reach out to me on",
+    "linkedinText": "LinkedIn",
+    "linkedinUrl": "https://www.linkedin.com/in/julio-cesar-avolio/",
+    "response": "- I'll respond as soon as possible!",
+    "email": "jravolio892@gmail.com",
+    "tel": "+55 (21) 988071858",
+    "social": {
+      "GitHub": {
+        "name": "GitHub",
+        "url": "https://github.com/jravolio",
+        "navbar": true
+      },
+      "LinkedIn": {
+        "name": "LinkedIn", 
+        "url": "https://www.linkedin.com/in/julio-cesar-avolio/",
+        "navbar": true
+      },
+      "email": {
+        "name": "Send Email",
+        "url": "mailto:jravolio892@gmail.com",
+        "navbar": false
+      }
+    }
+  },
+  "work": {
+    "title": "Work Experience",
+    "experiences": [
+      {
+        "company": "TopicTree",
+        "href": "https://topictree.com",
+        "badges": [],
+        "location": "Remote",
+        "title": "Backend Developer",
+        "logoUrl": "/static/images/topictree.svg",
+        "start": "June 2024",
+        "end": "Present",
+        "description": "Developed and maintained Google CDN infrastructure, improving website media performance. Responsible for refactoring legacy code and researching new technologies. Developed cloud-focused solutions using Google Cloud Platform (GCP)."
+      },
+      {
+        "company": "V.tal",
+        "href": "https://vtal.com",
+        "badges": [],
+        "location": "Rio de Janeiro, Brazil",
+        "title": "Full-Stack Developer",
+        "logoUrl": "/static/images/vtal.png",
+        "start": "August 2022",
+        "end": "November 2023",
+        "description": "Led automation initiatives reducing process time by 80%. Developed integration portal using React and Django for operational monitoring. Implemented solutions using Python, Jenkins, and UiPath."
+      },
+      {
+        "company": "Oi",
+        "href": "https://oi.com.br",
+        "badges": [],
+        "location": "Rio de Janeiro, Brazil",
+        "title": "Operations and Maintenance Intern",
+        "logoUrl": "/static/images/oi.png",
+        "start": "August 2021",
+        "end": "August 2022",
+        "description": "Maintained monitoring tools including Grafana and Zabbix. Handled business alarms impacting network and servers. Acted as Linux sysadmin for incident resolution."
+      }
+    ]
+  },
+  "education": {
+    "title": "Education",
+    "schools": [
+      {
+        "school": "Estácio de Sá",
+        "href": "https://estacio.br",
+        "degree": "Bachelor's Degree in Computer Science",
+        "logoUrl": "/static/images/estacio.png",
+        "start": "2021",
+        "end": "2025"
+      },
+      {
+        "school": "Wizard by Pearson",
+        "href": "https://wizard.com.br",
+        "degree": "English Course",
+        "logoUrl": "/static/images/wizard.png",
+        "start": "2012",
+        "end": "2020"
+      }
+    ]
+  },
+  "projects": {
+    "label": "Projects",
+    "title": "Featured Projects",
+    "description": "Here are some of my featured projects that showcase my skills and experience.",
+    "list": [
+      {
+        "title": "Transcriber AI",
+        "href": "https://github.com/jravolio/Transcriber",
+        "dates": "2024",
+        "description": "Integrated Whisper AI with Django, leveraging Celery for task management and Redis for messaging, to develop a dynamic and interactive web application for transcription services.",
+        "technologies": [
+          "Django",
+          "Celery",
+          "Redis", 
+          "Whisper AI",
+          "Python",
+          "Docker"
+        ],
+        "image": "/static/images/transcriber.jpeg",
+        "links": {
+          "Source": "https://github.com/jravolio/Transcriber"
+        }
+      },
+      {
+        "title": "RollSummary",
+        "href": "https://rollsummary.com",
+        "dates": "2024",
+        "description": "A website for summarizing tabletop RPG sessions, built with Next.js and React using server components. Integrates ChatGPT and Whisper APIs to provide session transcripts and summaries.",
+        "technologies": [
+          "Next.js",
+          "React",
+          "TypeScript",
+          "ChatGPT",
+          "Whisper AI"
+        ],
+        "image": "/static/images/rollsummary.webp",
+        "links": {
+          "Source": "https://rollsummary.com"
+        }
+      }
+    ]
+  },
+  "hero": {
+    "greeting": "Hi, I'm Julio!"
+  }
+}
