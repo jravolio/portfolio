@@ -35,7 +35,7 @@ export const DATA_pt = {
   ],
   navbar: [
     { href: "/", icon: HomeIcon, label: "Início" },
-    // { href: "/blog", icon: NotebookIcon, label: "Blog" },
+    { href: "/blog", icon: NotebookIcon, label: "Blog" },
   ],
   contact: {
     email: "jravolio892@gmail.com",
