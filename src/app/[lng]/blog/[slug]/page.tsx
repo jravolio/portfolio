@@ -3,7 +3,7 @@ import { DATA_en as DATA } from "@/data/resume_en";
 import { formatDate } from "@/lib/utils";
 import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound } from 'next/navigation'
 import { Suspense } from "react";
 
 

@@ -1,3 +1,4 @@
+/* react-hooks: "off" */
 import BlurFade from "@/components/magicui/blur-fade";
 import BlurFadeText from "@/components/magicui/blur-fade-text";
 import { ProjectCard } from "@/components/project-card";
@@ -8,12 +9,11 @@ import Link from "next/link";
 import Markdown from "react-markdown";
 import { useTranslation } from '../i18n';
 import { LinkIcon } from "lucide-react";
-import Image from "next/image";
 
 const BLUR_FADE_DELAY = 0.04;
 
 export default async function Page({ params: { lng } }: { params: { lng: any } }) {
-  const { t } = await useTranslation(lng, 'translation');
+  const { t } = await useTranslation(lng, 'translation'); // eslint-disable-line
 
   const workExperiences = t('work.experiences', { returnObjects: true }) as Array<{
     company: string;
