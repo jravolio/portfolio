@@ -7,6 +7,9 @@ Only local change: a `"use client"` directive, which the registry does not ship
 (8 of its 168 components have one) and without which these fail as server
 components.
 
+`ParticleText` is installed but not currently wired to anything: it fights a pixel font
+(see DESIGN.md). Kept because it is the right tool against a face with solid strokes.
+
 Do not hand-edit otherwise. `eslint.config.mjs` relaxes the `react-hooks` rules
 here because the violations are upstream's, and rewriting them would mean
 maintaining a fork every time the registry updates.

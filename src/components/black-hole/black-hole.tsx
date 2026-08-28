@@ -34,7 +34,7 @@ export function BlackHole({
   labels,
   centerX = 0.42,
   centerY = 0,
-  scale = 12.6,
+  scale = 11,
   onStats,
 }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -112,23 +112,6 @@ export function BlackHole({
     };
     canvas.addEventListener("webglcontextlost", onLost);
 
-    const onPointer = (e: PointerEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      renderer.setPointer(
-        ((e.clientX - rect.left) / rect.width) * 2 - 1,
-        ((e.clientY - rect.top) / rect.height) * 2 - 1,
-      );
-    };
-    const onLeave = () => {
-      renderer.setSpin(false);
-      renderer.setPointer(0, 0);
-    };
-    const onEnter = () => renderer.setSpin(true);
-
-    window.addEventListener("pointermove", onPointer, { passive: true });
-    const host = hostRef.current;
-    host?.addEventListener("pointerenter", onEnter);
-    host?.addEventListener("pointerleave", onLeave);
 
     const mo = new MutationObserver(syncColors);
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
@@ -137,10 +120,7 @@ export function BlackHole({
       io.disconnect();
       mo.disconnect();
       document.removeEventListener("visibilitychange", onVis);
-      window.removeEventListener("pointermove", onPointer);
       canvas.removeEventListener("webglcontextlost", onLost);
-      host?.removeEventListener("pointerenter", onEnter);
-      host?.removeEventListener("pointerleave", onLeave);
       renderer.dispose();
       rendererRef.current = null;
       setLive(false);

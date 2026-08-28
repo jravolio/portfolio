@@ -151,20 +151,15 @@ export function createRenderer(opts: RendererOptions) {
   let opacity = 1;
 
   let time = 0;
-  // Near edge-on. This is what produces the Gargantua silhouette: the disk
-  // crosses in front as a bright bar while its lensed far side arcs over the
-  // top and its underside arcs beneath, closing a halo around the shadow.
-  // Below ~1.35 the halo opens up and it reads as a tilted ring instead.
-  let incl = 1.5;
-  let inclTarget = 1.5;
-  const parallax: [number, number] = [0, 0];
-  let parallaxTarget: [number, number] = [0, 0];
-  let spin = 1;
-  let spinTarget = 1;
+  // Fixed, looking down onto the disk from a little above its plane. The field
+  // does not follow the cursor: a background that swings around under the
+  // pointer reads as a toy, and it pulls the eye off the copy beside it.
+  const incl = 1.15;
   let center: [number, number] = [0, 0];
-  let scale = 12.6;
+  // r_s per half-grid-height. Lower = the hole fills more of the frame.
+  let scale = 11;
 
-  const tune = { nameGain: 0.62, edge: 2.4, skyZ: -26.0 };
+  const tune = { nameGain: 0.62, edge: 2.4, skyZ: -26.0, black: 0.14, gamma: 0.75 };
 if (typeof window !== "undefined") (window as unknown as Record<string, unknown>).__bh = tune;
 
 let raf = 0;
@@ -206,12 +201,7 @@ let raf = 0;
 
     // Exponential smoothing, frame-rate independent. A constant lerp factor
     // would move at different speeds on 60Hz and 120Hz displays.
-    const k = 1 - Math.exp(-dt / 0.18);
-    incl += (inclTarget - incl) * k;
-    parallax[0] += (parallaxTarget[0] - parallax[0]) * k;
-    parallax[1] += (parallaxTarget[1] - parallax[1]) * k;
-    spin += (spinTarget - spin) * (1 - Math.exp(-dt / 0.45));
-    time += dt * spin;
+    time += dt;
 
     const ringW = Math.max(0.45 * ((2 * scale) / rows), 0.05);
 
@@ -225,16 +215,11 @@ let raf = 0;
     gl.uniform1f(gl.getUniformLocation(pField, "uScale"), scale);
     gl.uniform1f(gl.getUniformLocation(pField, "uIncl"), incl);
     gl.uniform1f(gl.getUniformLocation(pField, "uTime"), time);
-    gl.uniform2f(gl.getUniformLocation(pField, "uParallax"), parallax[0], parallax[1]);
+    gl.uniform2f(gl.getUniformLocation(pField, "uParallax"), 0, 0);
     gl.uniform2f(gl.getUniformLocation(pField, "uCenter"), center[0], center[1]);
     gl.uniform1i(gl.getUniformLocation(pField, "uSteps"), t.steps);
     gl.uniform1f(gl.getUniformLocation(pField, "uRingW"), ringW);
     gl.uniform1f(gl.getUniformLocation(pField, "uNameGain"), tune.nameGain);
-    gl.uniform2f(
-      gl.getUniformLocation(pField, "uSkyRect"),
-      (cols / rows) * 0.5 * scale,
-      scale,
-    );
     gl.uniform1f(gl.getUniformLocation(pField, "uSkyZ"), tune.skyZ);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, skyTex);
@@ -261,6 +246,8 @@ let raf = 0;
     gl.uniform1f(gl.getUniformLocation(pQuant, "uEdgeThresh"), tune.edge);
     gl.uniform1f(gl.getUniformLocation(pQuant, "uHysteresis"), 0.575);
     gl.uniform1f(gl.getUniformLocation(pQuant, "uFirstFrame"), firstFrame ? 1 : 0);
+    gl.uniform1f(gl.getUniformLocation(pQuant, "uBlack"), tune.black);
+    gl.uniform1f(gl.getUniformLocation(pQuant, "uGamma"), tune.gamma);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
     cellsA = dst;
@@ -352,17 +339,6 @@ let raf = 0;
       tier = t;
       cols = 0;
       resize();
-    },
-    setPointer(nx: number, ny: number) {
-      // Pointer Y drives inclination: face-on spiral at the top of the
-      // viewport, edge-on halo at the bottom. Two different silhouettes from
-      // one control.
-      // Kept inside the band where the halo stays closed.
-      inclTarget = 1.42 + ny * 0.17;
-      parallaxTarget = [nx * 1.6, -ny * 0.9];
-    },
-    setSpin(fast: boolean) {
-      spinTarget = fast ? 3.2 : 1;
     },
     setColors(inkHex: [number, number, number], accentHex: [number, number, number], op: number) {
       ink = inkHex;

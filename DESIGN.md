@@ -87,7 +87,13 @@ spectacle: the field. Everything below the hero is flat and instant.
 
 Two exceptions earn their place. The device toggle dissolves pixel-by-pixel from the
 centre over ~820ms, which is the right gesture for a raster device repainting itself. The
-contact heading assembles from particles once, on first scroll into view.
+contact heading resolves out of the black hole's own ramp glyphs, once, on first scroll
+into view.
+
+That heading was first built with a particle effect and rebuilt. Departure Mono is a pixel
+font whose identity is hard 1px edges on a 50-unit grid; dissolving it into sub-pixel dots
+read as a failed render, and it was the only element on a site made entirely of characters
+that was not itself made of characters. **Effects have to be expressible in the medium.**
 
 ## Effects
 

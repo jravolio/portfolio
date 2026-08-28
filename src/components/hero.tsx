@@ -48,7 +48,7 @@ export function Hero(props: Props) {
         headline={props.name.toUpperCase()}
         centerX={narrow ? 0 : 0.44}
         centerY={narrow ? -0.78 : 0}
-        scale={narrow ? 17 : 12.6}
+        scale={narrow ? 15 : 11}
         onStats={setStats}
         labels={{
           halt: props.labels.halt,

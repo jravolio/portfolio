@@ -27,7 +27,6 @@ uniform vec2  uParallax;
 uniform vec2  uCenter;      // where the hole sits, in normalised screen units
 uniform int   uSteps;
 uniform sampler2D uSky;      // the headline, rendered to a texture
-uniform vec2  uSkyRect;      // half-extent of the sky plane in world units
 uniform float uSkyZ;
 uniform float uRingW;
 uniform float uNameGain;
@@ -35,7 +34,7 @@ uniform float uNameGain;
 out vec4 fragColor;
 
 const float R_IN    = 3.0;
-const float R_OUT   = 16.0;   // wide enough that the disk streaks past the halo
+const float R_OUT   = 11.0;
 const float B_CRIT  = 2.598076211;   // 3*sqrt(3)/2 - the APPARENT shadow radius
 const float BEAM    = 1.9;
 const float OPACITY = 0.9;
@@ -66,6 +65,9 @@ void main() {
   c.x *= uGridAspect * uCellAspect;
   vec2 pr = (c - uCenter) * uScale + uParallax;
 
+  // Orthographic. A perspective camera was tried and removed: at a few thousand
+  // glyphs the extra depth cue does not survive quantisation, and the diverging
+  // rays smear the disk's outer halo into fog across the whole frame.
   float Z0 = R_OUT + 6.0;
   vec3 x = vec3(pr, Z0);
   vec3 v = vec3(0.0, 0.0, -1.0);
@@ -152,9 +154,9 @@ void main() {
     float t = (x.z - uSkyZ) / (-v.z);
     if (t > 0.0) {
       vec2 hit = (x + v * t).xy;
-      // uCenter is added back so the sky stays fixed to the viewport while
-      // the hole is offset: only lensing should move the headline.
-      vec2 uv = (hit + uCenter * uScale) / uSkyRect * 0.5 + 0.5;
+      // uCenter is added back so the plate stays fixed to the viewport while
+      // the hole is offset: only lensing should bend the headline.
+      vec2 uv = (hit / (uScale * 2.0) + uCenter) * 0.5 + 0.5;
       if (all(greaterThan(uv, vec2(0.0))) && all(lessThan(uv, vec2(1.0)))) {
         nameL = texture(uSky, vec2(uv.x, 1.0 - uv.y)).r * trans * uNameGain;
       }
@@ -166,7 +168,7 @@ void main() {
   // Analytic photon-ring coverage, carried separately so the quantiser can keep
   // the ring exactly one cell wide instead of letting it dither.
   float rr = length(pr);
-  float ringCov = exp(-pow((rr - B_CRIT) / uRingW, 2.0)) * (captured ? 1.0 : 1.0);
+  float ringCov = exp(-pow((rr - B_CRIT) / uRingW, 2.0));
 
   fragColor = vec4(diskL, ringCov, nameL, 1.0);
 }
@@ -191,6 +193,8 @@ uniform float uCellAspect;
 uniform float uEdgeThresh;
 uniform float uHysteresis;
 uniform float uFirstFrame;
+uniform float uBlack;
+uniform float uGamma;
 
 out vec4 fragColor;
 
@@ -253,9 +257,11 @@ void main() {
 
   // --- ramp index ---------------------------------------------------------
   float N = uRampCount;
-  // Perceptual, not linear: linear indexing crushes the outer haze into the
-  // darkest two glyphs.
-  float lp = pow(L, 1.0 / 2.2);
+  // Black point, then a mild gamma. The photographic 1/2.2 curve LIFTS darks,
+  // which on a bright-object-against-empty-sky image smears the disk's faint
+  // outer halo into fog across the entire frame. Subtracting a floor first is
+  // what gives back real empty sky.
+  float lp = pow(clamp((L - uBlack) / (1.0 - uBlack), 0.0, 1.0), uGamma);
 
   // Ordered dither on the INDEX, suppressed on the ring so the ring never
   // dithers. Buys ~2 perceived levels on the smooth haze for free.

@@ -260,9 +260,17 @@ export default async function RenderPage({ params }: { params: Promise<{ lng: st
         <h2>Why any of this is on a portfolio</h2>
         <p>
           Because a portfolio that claims systems ability should be a system, not a picture of one.
-          Everything above is checkable: open devtools, read the shader, drag the field and watch{" "}
-          <code>incl</code> move in the readout, turn on reduced motion and get a single frame, turn
-          off JavaScript and still read every word on the site.
+          Everything above is checkable: open devtools and read the shader, check the cell count and
+          frame time in the readout against the grid you are actually looking at, turn on reduced
+          motion and get a single pre-baked frame, turn off JavaScript and still read every word on
+          the site.
+        </p>
+        <p>
+          The field does not respond to the cursor, deliberately. An earlier version mapped pointer
+          position to the viewing angle, and it was the wrong instinct: a background that swings
+          around when you move the mouse asks to be played with, and this one sits directly beside
+          the only two sentences on the page that need reading. It holds still at{" "}
+          <code>incl = 1.15 rad</code>, looking down onto the disk from a little above its plane.
         </p>
       </div>
     </article>

@@ -80,11 +80,20 @@ sync stall.
 Physics constants live in `shaders.ts`; the CPU twin in `scripts/bake-blackhole.mjs` uses
 the same maths and is parameterised by `BH_*` env vars for tuning. Keep the two in parity.
 
-The viewing angle is **1.50 rad**, near edge-on. That is what produces the Gargantua
-silhouette: the disk crosses in front as a bright bar while its lensed far side arcs over
-the top and its underside arcs beneath, closing a halo around the shadow. Below ~1.35 the
-halo opens and it reads as a tilted ring instead. `R_OUT = 16` so the disk streaks past
-the halo rather than stopping at it.
+The viewing angle is **1.15 rad**, fixed: looking down onto the disk from a little above
+its plane, so you see its top surface and the lensed far side arcing over the shadow.
+
+The projection is **orthographic**. A perspective camera was built and removed: at a few
+thousand glyphs the extra depth cue does not survive quantisation, and the diverging rays
+smear the disk's faint outer halo into fog across the whole frame.
+
+The field **does not track the cursor**. An earlier version mapped pointer position to the
+viewing angle; it read as a toy and pulled the eye off the copy sitting next to it.
+
+The quantiser applies a **black point before gamma**. The photographic `1/2.2` curve lifts
+darks, which on a bright-object-against-empty-sky image is exactly wrong: it turns the
+disk's outer falloff into haze everywhere. Subtracting a floor first is what gives back
+real empty sky.
 
 ### The ramp is measured
 
