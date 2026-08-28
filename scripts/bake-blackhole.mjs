@@ -20,7 +20,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 // --- geometry, in units of the Schwarzschild radius r_s = 1 -----------------
 const R_IN = 3.0; // ISCO: inner edge of the disk
-const R_OUT = Number(process.env.BH_ROUT ?? 8.2); // outer edge. Physically the disk runs much further out,
+const R_OUT = Number(process.env.BH_ROUT ?? 16.0); // outer edge. Physically the disk runs much further out,
 // but past ~8 r_s it contributes nothing that survives quantisation to 13
 // glyphs, and it eats the empty space that makes the silhouette read.
 const B_CRIT = (3 * Math.sqrt(3)) / 2; // 2.598 - the APPARENT shadow radius.
@@ -31,13 +31,13 @@ const OPACITY = 0.9;
 const N_STEPS = Number(process.env.BH_STEPS ?? 96); // CPU is cheap here; the GPU runs 40
 // 1.25 rad off face-on. Below ~1.0 the far side of the disk does not bend far
 // enough over the shadow to read; above ~1.4 the disk collapses into a line.
-const INCL = Number(process.env.BH_INCL ?? 1.25);
+const INCL = Number(process.env.BH_INCL ?? 1.50);
 
 // r_s per half-grid-height. The constraint is a two-sided one: the shadow has
 // to stay in the 20-40 cell band where a silhouette reads, AND the disk's outer
 // edge has to land inside the frame with space left over. R_OUT/SCALE = 0.78
 // leaves a fifth of the half-height as empty sky.
-const SCALE = Number(process.env.BH_SCALE ?? 10.5);
+const SCALE = Number(process.env.BH_SCALE ?? 12.6);
 
 const CELL_ASPECT = 0.5; // measured: Departure Mono advance 7px / line 14px
 
@@ -184,7 +184,7 @@ function trace(px, py, time) {
         const density = band * (0.10 + 2.1 * sn * sn);
         // tprof^2, not tprof^4: bolometric I ~ T^4 collapses to one bright
         // cell once quantised to 13 glyphs.
-        emit += trans * Number(process.env.BH_EMIT ?? 1.8) * density * tprof * tprof * Math.pow(g, BEAM);
+        emit += trans * Number(process.env.BH_EMIT ?? 2.5) * density * tprof * tprof * Math.pow(g, BEAM);
         trans *= 1 - Math.min(Math.max(OPACITY * density, 0), 1);
       }
     }
@@ -196,7 +196,7 @@ function trace(px, py, time) {
   // as good as captured. This one line is what keeps the shadow edge clean.
   if (!captured && x[0] * x[0] + x[1] * x[1] + x[2] * x[2] < 4.0) captured = true;
 
-  const L = 1 - Math.exp(-emit * Number(process.env.BH_TONE ?? 1.5));
+  const L = 1 - Math.exp(-emit * Number(process.env.BH_TONE ?? 1.7));
 
   // Analytic photon-ring coverage. Carried separately so the ring can override
   // the ramp lookup and stay exactly one cell wide at any grid size.

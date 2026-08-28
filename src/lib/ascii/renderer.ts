@@ -151,14 +151,18 @@ export function createRenderer(opts: RendererOptions) {
   let opacity = 1;
 
   let time = 0;
-  let incl = 1.25;
-  let inclTarget = 1.25;
+  // Near edge-on. This is what produces the Gargantua silhouette: the disk
+  // crosses in front as a bright bar while its lensed far side arcs over the
+  // top and its underside arcs beneath, closing a halo around the shadow.
+  // Below ~1.35 the halo opens up and it reads as a tilted ring instead.
+  let incl = 1.5;
+  let inclTarget = 1.5;
   const parallax: [number, number] = [0, 0];
   let parallaxTarget: [number, number] = [0, 0];
   let spin = 1;
   let spinTarget = 1;
   let center: [number, number] = [0, 0];
-  let scale = 10.5;
+  let scale = 12.6;
 
   const tune = { nameGain: 0.62, edge: 2.4, skyZ: -26.0 };
 if (typeof window !== "undefined") (window as unknown as Record<string, unknown>).__bh = tune;
@@ -353,7 +357,8 @@ let raf = 0;
       // Pointer Y drives inclination: face-on spiral at the top of the
       // viewport, edge-on halo at the bottom. Two different silhouettes from
       // one control.
-      inclTarget = 0.95 + ny * 0.55;
+      // Kept inside the band where the halo stays closed.
+      inclTarget = 1.42 + ny * 0.17;
       parallaxTarget = [nx * 1.6, -ny * 0.9];
     },
     setSpin(fast: boolean) {

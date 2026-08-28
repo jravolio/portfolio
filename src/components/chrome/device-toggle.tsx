@@ -34,7 +34,7 @@ export function DeviceToggle({ label }: { label: string }) {
 
   if (!mounted) {
     // Reserve the exact cell footprint so nothing shifts on hydration.
-    return <div aria-hidden="true" style={{ width: 84, height: 28 }} />;
+    return <div aria-hidden="true" style={{ width: 126, height: 28 }} />;
   }
 
   return (
@@ -44,7 +44,7 @@ export function DeviceToggle({ label }: { label: string }) {
       aria-pressed={isDark}
       onClick={() => setTheme(isDark ? "light" : "dark")}
       className="border border-rule text-dim hover:border-amber hover:text-amber focus-visible:text-amber"
-      style={{ width: 84, height: 28 }}
+      style={{ width: 126, height: 28 }}
     >
       <PixelSwap
         firstContent={face("[ paper ]")}
@@ -52,9 +52,15 @@ export function DeviceToggle({ label }: { label: string }) {
         active={isDark}
         trigger="manual"
         pattern="center"
-        pixelSize={7}
-        duration={0.42}
-        pixelDuration={0.3}
+        // PixelSwap's durations are MILLISECONDS (defaults 1400 / 450), not
+        // seconds. Passing 0.42 ran the whole dissolve in under half a
+        // millisecond, which looks exactly like no animation at all.
+        duration={820}
+        pixelDuration={360}
+        pixelSize={9}
+        gap={1}
+        pixelSpin={0}
+        pixelScale={0.6}
         easing="cubic-bezier(0.16, 1, 0.3, 1)"
         className="h-full w-full"
       />

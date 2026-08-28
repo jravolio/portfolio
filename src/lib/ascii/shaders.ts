@@ -35,7 +35,7 @@ uniform float uNameGain;
 out vec4 fragColor;
 
 const float R_IN    = 3.0;
-const float R_OUT   = 8.2;
+const float R_OUT   = 16.0;   // wide enough that the disk streaks past the halo
 const float B_CRIT  = 2.598076211;   // 3*sqrt(3)/2 - the APPARENT shadow radius
 const float BEAM    = 1.9;
 const float OPACITY = 0.9;
@@ -133,7 +133,7 @@ void main() {
         float density = band * (0.10 + 2.1 * sn * sn);
         // tprof^2, not tprof^4: bolometric I ~ T^4 collapses to a single bright
         // cell once quantised to a dozen glyphs.
-        emit  += trans * 1.8 * density * tprof * tprof * pow(g, BEAM);
+        emit  += trans * 2.5 * density * tprof * tprof * pow(g, BEAM);
         trans *= 1.0 - clamp(OPACITY * density, 0.0, 1.0);
       }
     }
@@ -161,7 +161,7 @@ void main() {
     }
   }
 
-  float diskL = 1.0 - exp(-emit * 1.5);
+  float diskL = 1.0 - exp(-emit * 1.7);
 
   // Analytic photon-ring coverage, carried separately so the quantiser can keep
   // the ring exactly one cell wide instead of letting it dither.

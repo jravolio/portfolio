@@ -85,6 +85,10 @@ Scale: 11 / 22 / 33 / 44 / 66px on 14 / 28 / 42 / 56 / 70px line boxes.
 Ease-out only (`--ease-out-quart`, `--ease-out-expo`). No bounce, no elastic. One
 spectacle: the field. Everything below the hero is flat and instant.
 
+Two exceptions earn their place. The device toggle dissolves pixel-by-pixel from the
+centre over ~820ms, which is the right gesture for a raster device repainting itself. The
+contact heading assembles from particles once, on first scroll into view.
+
 ## Effects
 
 The aperture grille is vertical stripes on a 3px period at 0.055 opacity, dark theme only.

@@ -34,7 +34,7 @@ export function BlackHole({
   labels,
   centerX = 0.42,
   centerY = 0,
-  scale = 9.2,
+  scale = 12.6,
   onStats,
 }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -52,7 +52,7 @@ export function BlackHole({
     if (!r || !host) return;
     const cs = getComputedStyle(host);
     r.setColors(
-      resolveColor(cs.getPropertyValue("--dim").trim(), "#6F6151"),
+      resolveColor(cs.getPropertyValue("--text").trim(), "#2B1F11"),
       resolveColor(cs.getPropertyValue("--amber").trim(), "#985704"),
       1,
     );

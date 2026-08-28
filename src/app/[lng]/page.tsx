@@ -57,6 +57,7 @@ export default async function IndexPage({ params }: { params: Promise<{ lng: str
           { id: "now", label: t.headings.now },
           { id: "work", label: t.headings.selectedWork },
           { id: "writing", label: t.headings.writing },
+          { id: "off-clock", label: t.headings.offClock },
           { id: "contact", label: t.headings.contact },
         ]}
       />
@@ -146,9 +147,14 @@ export default async function IndexPage({ params }: { params: Promise<{ lng: str
         </section>
       ) : null}
 
-      <section id="contact" className="mt-20">
-        <AttentionText text={t.headings.contact} as="h2" fontSize={44} />
-        <p className="mt-4 max-w-[62ch] text-body text-dim">
+      <section id="off-clock" className="mt-16">
+        <h2 className="text-chrome text-dim">{t.headings.offClock}</h2>
+        <p className="mt-2 max-w-[68ch] text-body">{t.offClock}</p>
+      </section>
+
+      <section id="contact" className="mt-16">
+        <AttentionText text={t.headings.contact} as="h2" />
+        <p className="mt-2 max-w-[62ch] text-body text-dim">
           {SITE.email} · {SITE.tel}
         </p>
         <div className="mt-4">

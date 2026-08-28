@@ -82,23 +82,12 @@ export default async function LocaleLayout({
 
           <TopBar lng={lng as Locale} />
 
-          <main id="main" className="mx-auto w-full max-w-[min(100%-2rem,896px)] pb-24">
+          <main id="main" className="mx-auto w-full max-w-[min(100%-2rem,896px)] pb-14">
             {children}
           </main>
 
           <footer className="mt-16">
-            <StatusBar
-              items={[
-                `locale ${lng}`,
-                "departure mono 11px",
-                "commit mono 16/28",
-                "cell 7x14px",
-                "aspect 0.500",
-                "schwarzschild a=0",
-                "b_crit 2.598 r_s",
-                "no analytics beyond page counts",
-              ]}
-            />
+            <StatusBar items={t.ticker} />
             <div className="mx-auto flex max-w-[min(100%-2rem,896px)] flex-wrap items-center justify-between gap-2 py-4 text-chrome text-dim">
               <span>
                 {SITE.name} · {SITE.location[lng === "pt" ? "pt" : "en"]}

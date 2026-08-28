@@ -78,7 +78,13 @@ sync stall.
 3. **Composite** (`GLYPH_FRAG`) — one quad sampling a NEAREST glyph atlas.
 
 Physics constants live in `shaders.ts`; the CPU twin in `scripts/bake-blackhole.mjs` uses
-the same maths and is parameterised by `BH_*` env vars for tuning.
+the same maths and is parameterised by `BH_*` env vars for tuning. Keep the two in parity.
+
+The viewing angle is **1.50 rad**, near edge-on. That is what produces the Gargantua
+silhouette: the disk crosses in front as a bright bar while its lensed far side arcs over
+the top and its underside arcs beneath, closing a halo around the shadow. Below ~1.35 the
+halo opens and it reads as a tilted ring instead. `R_OUT = 16` so the disk streaks past
+the halo rather than stopping at it.
 
 ### The ramp is measured
 
@@ -142,6 +148,13 @@ figures are quoted from it.
   Use relative colour syntax: `oklch(from var(--bg) l c h / 0)`.
 - React Bits components do not ship `"use client"`. See `src/components/vendor/README.md`.
 - `next/font` options must be written literals; a shared `const` fails the build.
+- **PixelSwap durations are milliseconds** (defaults 1400 / 450). Passing `0.42` runs the
+  whole dissolve in under half a millisecond, which is indistinguishable from no animation.
+- **Canvas 2D cannot resolve `var(--custom-property)`** in `ctx.font` or `fillStyle`. Read
+  the token to a concrete value with `getComputedStyle` first. ParticleText silently falls
+  back to its default face otherwise.
+- `ParticleText` hardcodes `min-h-[240px]` on its root; override with `min-h-0!` or it
+  overflows its container.
 - `html { overflow-x: hidden }` — the full-bleed hero uses `100vw`, which exceeds the
   viewport when a vertical scrollbar is present.
 

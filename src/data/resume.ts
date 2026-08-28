@@ -56,9 +56,13 @@ export type Dictionary = {
   tagline: string;
   identity: string;
   now: string;
+  offClock: string;
+  /** Status-line items. Real facts only, never a decorative logo ticker. */
+  ticker: string[];
   nav: { index: string; work: string; writing: string; render: string };
   headings: {
     now: string;
+    offClock: string;
     work: string;
     selectedWork: string;
     writing: string;
@@ -109,9 +113,27 @@ export const CONTENT: Record<Locale, Dictionary> = {
     identity:
       "Julio Cesar Avolio — full-stack engineer in Rio de Janeiro, building e-procurement systems for US public agencies at PlanetBids.",
     now: "Currently centralising email delivery at PlanetBids: one service on SES, SQS and Kubernetes workers replacing logic that lived in six places. Also writing the renderer behind this page.",
+    offClock:
+      "Off the clock I am at a table rolling dice. Tabletop RPGs are the hobby, and RollSummary came straight out of it: sessions run long, memory runs short, so I built something that listens to a session and writes down what actually happened. Most of what I know about state machines I learned from arguing over initiative order.",
+    ticker: [
+      "rio de janeiro, brazil",
+      "building e-procurement for US public agencies",
+      "python · django · react · aws · terraform",
+      "tabletop rpgs on the weekend",
+      "d20 · initiative order · session zero",
+      "rollsummary.com transcribes my sessions",
+      "en / pt",
+      "departure mono 11px · commit mono 16/28",
+      "cell 7x14px · aspect 0.500",
+      "schwarzschild a=0 · b_crit 2.598 r_s",
+      "40 geodesic steps, no readback",
+      "ramp measured at boot, never hand-ordered",
+      "no analytics beyond page counts",
+    ],
     nav: { index: "index", work: "work", writing: "writing", render: "render" },
     headings: {
       now: "now",
+      offClock: "off the clock",
       work: "work",
       selectedWork: "selected work",
       writing: "writing",
@@ -229,7 +251,7 @@ export const CONTENT: Record<Locale, Dictionary> = {
         name: "RollSummary",
         year: "2024",
         blurb:
-          "Transcribes and summarises tabletop RPG sessions. Next.js server components over the Whisper and GPT APIs.",
+          "Transcribes and summarises tabletop RPG sessions, built because I play them and kept losing what happened last week. Next.js server components over the Whisper and GPT APIs.",
         stack: ["next.js", "react", "typescript", "whisper", "gpt"],
         live: "https://rollsummary.com",
       },
@@ -274,9 +296,27 @@ export const CONTENT: Record<Locale, Dictionary> = {
     identity:
       "Julio Cesar Avolio — engenheiro full-stack no Rio de Janeiro, construindo sistemas de compras públicas para órgãos americanos na PlanetBids.",
     now: "No momento estou centralizando o envio de e-mails na PlanetBids: um serviço sobre SES, SQS e workers em Kubernetes substituindo lógica que existia em seis lugares. Também escrevendo o renderizador por trás desta página.",
+    offClock:
+      "Fora do expediente eu estou numa mesa rolando dados. RPG de mesa é o hobby, e o RollSummary saiu direto dele: as sessões são longas e a memória é curta, então construí algo que escuta a sessão e anota o que de fato aconteceu. Boa parte do que sei sobre máquinas de estado eu aprendi discutindo ordem de iniciativa.",
+    ticker: [
+      "rio de janeiro, brasil",
+      "compras públicas para órgãos americanos",
+      "python · django · react · aws · terraform",
+      "rpg de mesa no fim de semana",
+      "d20 · ordem de iniciativa · sessão zero",
+      "rollsummary.com transcreve minhas sessões",
+      "en / pt",
+      "departure mono 11px · commit mono 16/28",
+      "célula 7x14px · proporção 0.500",
+      "schwarzschild a=0 · b_crit 2.598 r_s",
+      "40 passos geodésicos, sem readback",
+      "rampa medida no boot, nunca ordenada à mão",
+      "sem analytics além de contagem de páginas",
+    ],
     nav: { index: "início", work: "trajetória", writing: "textos", render: "render" },
     headings: {
       now: "agora",
+      offClock: "fora do expediente",
       work: "trajetória",
       selectedWork: "trabalhos selecionados",
       writing: "textos",
@@ -394,7 +434,7 @@ export const CONTENT: Record<Locale, Dictionary> = {
         name: "RollSummary",
         year: "2024",
         blurb:
-          "Transcreve e resume sessões de RPG de mesa. Server components do Next.js sobre as APIs Whisper e GPT.",
+          "Transcreve e resume sessões de RPG de mesa, feito porque eu jogo e vivia esquecendo o que rolou na semana anterior. Server components do Next.js sobre as APIs Whisper e GPT.",
         stack: ["next.js", "react", "typescript", "whisper", "gpt"],
         live: "https://rollsummary.com",
       },
