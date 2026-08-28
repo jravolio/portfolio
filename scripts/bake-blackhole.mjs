@@ -211,6 +211,60 @@ function smoothstep(a, b, x) {
   return t * t * (3 - 2 * t);
 }
 
+/**
+ * Braille render. Each cell is a 2x4 dot matrix (U+2800-28FF), so this carries
+ * eight times the effective resolution of the ramp on the same grid.
+ *
+ * Unicode's dot numbering is not raster order:
+ *   dot1 (0,0)=0x01  dot4 (1,0)=0x08
+ *   dot2 (0,1)=0x02  dot5 (1,1)=0x10
+ *   dot3 (0,2)=0x04  dot6 (1,2)=0x20
+ *   dot7 (0,3)=0x40  dot8 (1,3)=0x80
+ */
+function ign(x, y) {
+  // Interleaved gradient noise. Bayer's 8x8 grid aligns with the 2x4 Braille
+  // cell structure and shows up as a hard 4-column repeat; IGN has no periodic
+  // structure but is still a pure function of position, so it never shimmers
+  // between frames the way white noise would.
+  return (52.9829189 * (0.06711056 * x + 0.00583715 * y)) % 1;
+}
+
+export function renderBraille(cols, rows, time = 0) {
+  RING_W = Math.max(Number(process.env.BH_RINGW ?? 0.45) * ((2 * SCALE) / rows), 0.05);
+  const black = Number(process.env.BH_BLACK ?? 0.3);
+  const gam = Number(process.env.BH_GAMMA ?? 1.05);
+  const out = [];
+
+  for (let row = 0; row < rows; row++) {
+    let line = "";
+    for (let col = 0; col < cols; col++) {
+      let bits = 0;
+      for (let sx = 0; sx < 2; sx++) {
+        for (let sy = 0; sy < 4; sy++) {
+          const dx = col * 2 + sx;
+          const dy = row * 4 + sy;
+          const fx = (dx + 0.5) / (cols * 2);
+          const fy = (dy + 0.5) / (rows * 4);
+          let cx = fx * 2 - 1;
+          const cy = 1 - fy * 2;
+          cx *= (cols / rows) * CELL_ASPECT;
+          const t = trace(cx * SCALE, cy * SCALE, time);
+          const lit = Math.min(t.L + t.ringCov * 1.1 * (0.35 + 0.65 * t.L), 1);
+          const norm = Math.min(Math.max((lit - black) / (1 - black), 0), 1);
+          if (Math.pow(norm, gam) > ign(dx, dy)) {
+            bits |= sy < 3 ? 1 << (sy + 3 * sx) : 0x40 << sx;
+          }
+        }
+      }
+      line += String.fromCharCode(0x2800 + bits);
+    }
+    // U+2800 is a blank Braille cell, not a space: trailing ones still occupy a
+    // column, so trimming them would shorten the row and shear the grid.
+    out.push(line.replace(/\u2800+$/, ""));
+  }
+  return out.join("\n");
+}
+
 export function render(cols, rows, time = 0, supersample = 2) {
   const out = [];
   const N = RAMP.length;
@@ -273,12 +327,15 @@ export function render(cols, rows, time = 0, supersample = 2) {
 const COLS = Number(process.env.BH_COLS ?? 148);
 const ROWS = Number(process.env.BH_ROWS ?? 46);
 
-const art = render(COLS, ROWS, 0);
+const BRAILLE = process.env.BH_RAMP !== "1";
+const art = BRAILLE ? renderBraille(COLS, ROWS, 0) : render(COLS, ROWS, 0);
 mkdirSync(join(ROOT, "public", "static"), { recursive: true });
 writeFileSync(join(ROOT, "public", "static", "blackhole.txt"), art, "utf8");
 
 const cells = COLS * ROWS;
 process.stdout.write(art + "\n");
 console.error(
-  `\nbaked public/static/blackhole.txt  ${COLS}x${ROWS} = ${cells} cells, ${art.length} bytes`,
+  `\nbaked public/static/blackhole.txt  ${COLS}x${ROWS} = ${cells} cells` +
+    (BRAILLE ? ` (${cells * 8} braille dots)` : "") +
+    `, ${Buffer.byteLength(art, "utf8")} bytes`,
 );

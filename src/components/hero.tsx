@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { BlackHole } from "@/components/black-hole/black-hole";
 import { CopyEmail } from "@/components/chrome/copy-email";
-import type { Stats } from "@/lib/ascii/renderer";
+import type { Mode, Stats } from "@/lib/ascii/renderer";
 
 type Props = {
   staticFrame: string;
@@ -31,6 +31,7 @@ type Props = {
  */
 export function Hero(props: Props) {
   const [stats, setStats] = useState<Stats | null>(null);
+  const [mode, setMode] = useState<Mode>("braille");
   // On a narrow viewport there is no left column to sit beside, so the hole
   // drops below the copy and the scrim runs top-to-bottom instead.
   const narrow = useMediaQuery("(max-width: 768px)", false);
@@ -49,6 +50,7 @@ export function Hero(props: Props) {
         centerX={narrow ? 0 : 0.44}
         centerY={narrow ? -0.78 : 0}
         scale={narrow ? 15 : 11}
+        mode={mode}
         onStats={setStats}
         labels={{
           halt: props.labels.halt,
@@ -113,7 +115,7 @@ export function Hero(props: Props) {
           uniforms: drag the field and watch `incl` move. That is the proof it
           is computed rather than looped. */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0">
-        <div className="mx-auto flex max-w-[min(100%-2rem,1280px)] flex-wrap items-center gap-x-4 gap-y-1 border-t border-rule bg-bg/95 px-2 py-2 text-chrome text-dim backdrop-blur-[1px]">
+        <div className="mx-auto flex max-w-[min(100%-2rem,1280px)] flex-wrap items-center gap-x-4 gap-y-1 border-t border-rule bg-bg/95 px-2 py-2 pr-28 text-chrome text-dim backdrop-blur-[1px]">
           <span aria-hidden="true">schwarzschild a=0</span>
           <span aria-hidden="true" data-numeric>
             b_crit 2.598 r_s
@@ -125,6 +127,7 @@ export function Hero(props: Props) {
               </span>
               <span aria-hidden="true" data-numeric>
                 {stats.cols}x{stats.rows} cells
+                {stats.mode === "braille" ? ` · ${stats.samples.toLocaleString("en-US")} dots` : ""}
               </span>
               <span aria-hidden="true" data-numeric>
                 {stats.steps} steps
@@ -136,6 +139,28 @@ export function Hero(props: Props) {
           ) : (
             <span aria-hidden="true">pre-rendered frame</span>
           )}
+
+          {/* Flipping between the two is the clearest way to show what the
+              Braille sub-cell raster buys: same grid, eight times the samples. */}
+          {stats ? (
+            <div className="pointer-events-auto ml-auto flex items-center gap-1">
+              {(["ramp", "braille"] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setMode(m)}
+                  aria-pressed={mode === m}
+                  className={
+                    mode === m
+                      ? "border border-amber px-2 text-chrome text-amber"
+                      : "border border-rule px-2 text-chrome text-dim hover:border-amber hover:text-amber"
+                  }
+                >
+                  {m === "ramp" ? "[ \u2591 blocks ]" : "[ \u28ff braille ]"}
+                </button>
+              ))}
+            </div>
+          ) : null}
         </div>
       </div>
     </section>

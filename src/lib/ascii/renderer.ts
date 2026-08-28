@@ -1,4 +1,4 @@
-import { buildAtlas, type Atlas } from "./atlas";
+import { buildAtlas, buildBrailleAtlas, type Atlas } from "./atlas";
 import { FIELD_FRAG, GLYPH_FRAG, QUANT_FRAG, VERT } from "./shaders";
 
 export type Tier = 0 | 1 | 2 | 3;
@@ -10,10 +10,15 @@ const TIERS: Record<Tier, { steps: number; ss: number; maxCols: number }> = {
   3: { steps: 20, ss: 1, maxCols: 110 },
 };
 
+export type Mode = "ramp" | "braille";
+
 export type RendererOptions = {
   canvas: HTMLCanvasElement;
   headline: string;
   fontFamily: string;
+  /** Must contain U+2800-28FF. Departure Mono does not; Commit Mono does. */
+  brailleFontFamily: string;
+  mode?: Mode;
   onStats?: (s: Stats) => void;
 };
 
@@ -24,6 +29,9 @@ export type Stats = {
   frameMs: number;
   incl: number;
   tier: Tier;
+  mode: Mode;
+  /** Addressable samples: cells in ramp mode, dots in Braille mode. */
+  samples: number;
 };
 
 function compile(gl: WebGL2RenderingContext, type: number, src: string) {
@@ -108,7 +116,8 @@ function makeSkyTexture(gl: WebGL2RenderingContext, text: string, fontFamily: st
 }
 
 export function createRenderer(opts: RendererOptions) {
-  const { canvas, headline, fontFamily, onStats } = opts;
+  const { canvas, headline, fontFamily, brailleFontFamily, onStats } = opts;
+  let mode: Mode = opts.mode ?? "braille";
 
   const gl = canvas.getContext("webgl2", {
     alpha: true,
@@ -120,11 +129,27 @@ export function createRenderer(opts: RendererOptions) {
   });
   if (!gl) return null;
 
-  const atlas: Atlas = buildAtlas(fontFamily, window.devicePixelRatio || 1);
+  const dprNow = window.devicePixelRatio || 1;
+  const rampAtlas: Atlas = buildAtlas(fontFamily, dprNow);
+  let brailleAtlas: Atlas | null = null;
+  try {
+    brailleAtlas = buildBrailleAtlas(brailleFontFamily, dprNow);
+  } catch {
+    // Face has no Braille block. Stay on the ramp rather than let the browser
+    // substitute a face at the wrong advance width and break the lattice.
+    brailleAtlas = null;
+    mode = "ramp";
+  }
+  const atlasOf = (m: Mode) => (m === "braille" && brailleAtlas ? brailleAtlas : rampAtlas);
+
+  function uploadAtlas(a: Atlas) {
+    gl!.bindTexture(gl!.TEXTURE_2D, atlasTex);
+    gl!.texImage2D(gl!.TEXTURE_2D, 0, gl!.RGBA8, gl!.RGBA, gl!.UNSIGNED_BYTE, a.texture);
+  }
 
   const atlasTex = gl.createTexture()!;
   gl.bindTexture(gl.TEXTURE_2D, atlasTex);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, atlas.texture);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, atlasOf(mode).texture);
   // NEAREST: the pixel font must not be smeared by the sampler.
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
@@ -159,7 +184,14 @@ export function createRenderer(opts: RendererOptions) {
   // r_s per half-grid-height. Lower = the hole fills more of the frame.
   let scale = 11;
 
-  const tune = { nameGain: 0.62, edge: 2.4, skyZ: -26.0, black: 0.14, gamma: 0.75 };
+  // Braille resolves 8x more samples, so it shows far more of the field's low
+// end; it needs a higher black point and a steeper curve than the ramp to keep
+// the outer falloff from reading as an even dither texture.
+const TONE = {
+  ramp: { black: 0.14, gamma: 0.75 },
+  braille: { black: 0.3, gamma: 1.05 },
+};
+const tune = { nameGain: 0.62, edge: 2.4, skyZ: -26.0 };
 if (typeof window !== "undefined") (window as unknown as Record<string, unknown>).__bh = tune;
 
 let raf = 0;
@@ -189,7 +221,9 @@ let raf = 0;
         gl!.deleteFramebuffer(target.fbo);
       }
     }
-    field = makeTarget(gl!, cols * t.ss, rows * t.ss, gl!.LINEAR);
+    const fx = mode === "braille" ? 2 : t.ss;
+    const fy = mode === "braille" ? 4 : t.ss;
+    field = makeTarget(gl!, cols * fx, rows * fy, gl!.LINEAR);
     cellsA = makeTarget(gl!, cols, rows, gl!.NEAREST);
     cellsB = makeTarget(gl!, cols, rows, gl!.NEAREST);
     firstFrame = true;
@@ -240,14 +274,15 @@ let raf = 0;
     gl.bindTexture(gl.TEXTURE_2D, src.tex);
     gl.uniform1i(gl.getUniformLocation(pQuant, "uPrev"), 1);
     gl.uniform2f(gl.getUniformLocation(pQuant, "uGrid"), cols, rows);
-    gl.uniform1f(gl.getUniformLocation(pQuant, "uSS"), t.ss);
-    gl.uniform1f(gl.getUniformLocation(pQuant, "uRampCount"), atlas.rampCount);
+    gl.uniform1f(gl.getUniformLocation(pQuant, "uSS"), mode === "braille" ? 2 : t.ss);
+    gl.uniform1f(gl.getUniformLocation(pQuant, "uBraille"), mode === "braille" ? 1 : 0);
+    gl.uniform1f(gl.getUniformLocation(pQuant, "uRampCount"), atlasOf(mode).rampCount);
     gl.uniform1f(gl.getUniformLocation(pQuant, "uCellAspect"), 0.5);
     gl.uniform1f(gl.getUniformLocation(pQuant, "uEdgeThresh"), tune.edge);
     gl.uniform1f(gl.getUniformLocation(pQuant, "uHysteresis"), 0.575);
     gl.uniform1f(gl.getUniformLocation(pQuant, "uFirstFrame"), firstFrame ? 1 : 0);
-    gl.uniform1f(gl.getUniformLocation(pQuant, "uBlack"), tune.black);
-    gl.uniform1f(gl.getUniformLocation(pQuant, "uGamma"), tune.gamma);
+    gl.uniform1f(gl.getUniformLocation(pQuant, "uBlack"), TONE[mode].black);
+    gl.uniform1f(gl.getUniformLocation(pQuant, "uGamma"), TONE[mode].gamma);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
     cellsA = dst;
@@ -270,7 +305,11 @@ let raf = 0;
     gl.uniform1i(gl.getUniformLocation(pGlyph, "uAtlas"), 1);
     gl.uniform2f(gl.getUniformLocation(pGlyph, "uGrid"), cols, rows);
     gl.uniform2f(gl.getUniformLocation(pGlyph, "uResolution"), canvas.width, canvas.height);
-    gl.uniform1f(gl.getUniformLocation(pGlyph, "uAtlasCount"), atlas.count);
+    gl.uniform2f(
+      gl.getUniformLocation(pGlyph, "uAtlasGrid"),
+      atlasOf(mode).atlasCols,
+      atlasOf(mode).atlasRows,
+    );
     gl.uniform3fv(gl.getUniformLocation(pGlyph, "uInk"), ink);
     gl.uniform3fv(gl.getUniformLocation(pGlyph, "uAccent"), accent);
     gl.uniform1f(gl.getUniformLocation(pGlyph, "uOpacity"), opacity);
@@ -303,7 +342,16 @@ let raf = 0;
       }
     }
 
-    onStats?.({ cols, rows, steps: TIERS[tier].steps, frameMs, incl, tier });
+    onStats?.({
+      cols,
+      rows,
+      steps: TIERS[tier].steps,
+      frameMs,
+      incl,
+      tier,
+      mode,
+      samples: mode === "braille" ? cols * rows * 8 : cols * rows,
+    });
     raf = requestAnimationFrame(loop);
   }
 
@@ -333,6 +381,19 @@ let raf = 0;
     /** r_s per half-grid-height. Lower = the hole fills more of the frame. */
     setScale(v: number) {
       scale = v;
+    },
+    get mode() {
+      return mode;
+    },
+    get hasBraille() {
+      return brailleAtlas !== null;
+    },
+    setMode(m: Mode) {
+      if (m === mode || (m === "braille" && !brailleAtlas)) return;
+      mode = m;
+      uploadAtlas(atlasOf(mode));
+      cols = 0; // force the field target to be rebuilt at the new resolution
+      resize();
     },
     setTier(t: Tier) {
       if (t === tier) return;

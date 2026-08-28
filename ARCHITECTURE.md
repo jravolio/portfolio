@@ -95,6 +95,25 @@ darks, which on a bright-object-against-empty-sky image is exactly wrong: it tur
 disk's outer falloff into haze everywhere. Subtracting a floor first is what gives back
 real empty sky.
 
+### Braille sub-cell rasterisation
+
+The default mode renders into U+2800-28FF, a 2x4 dot matrix per cell, for **8x** the effective
+resolution on the same grid: 80,360 dots at 205x49 rather than 10,045 cells. The field target is
+allocated at `cols*2 x rows*4` so every Braille dot maps to exactly one field texel: no averaging.
+
+- **Departure Mono has 0/256 Braille patterns** (measured from its `cmap`). Commit Mono has all
+  256, so the Braille atlas is built from Commit Mono and `buildBrailleAtlas` throws rather than
+  let a fallback face render at the wrong advance width.
+- The atlas is a 16x16 grid, not one row: 256 cells in a row would be 3584px at DPR 2.
+- The per-dot threshold is **interleaved gradient noise**, not Bayer. An 8x8 Bayer matrix aligns
+  with the 2x4 cell structure and produces a visible four-column repeat. IGN has no periodic
+  structure and is still position-only, so it does not shimmer.
+- Braille needs its own tone curve (`TONE.braille`): it resolves 8x more samples, so the ramp's
+  black point leaves the outer falloff reading as an even dither.
+
+`[ blocks | braille ]` in the hero readout swaps mode live. It rebuilds the atlas and the field
+target but never the GL context.
+
 ### The ramp is measured
 
 `atlas.ts` rasterises every candidate glyph at boot and sorts by integrated alpha.

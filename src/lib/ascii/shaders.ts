@@ -195,6 +195,7 @@ uniform float uHysteresis;
 uniform float uFirstFrame;
 uniform float uBlack;
 uniform float uGamma;
+uniform float uBraille;   // 1 = 2x4 sub-cell mode
 
 out vec4 fragColor;
 
@@ -225,8 +226,55 @@ vec4 cell(vec2 id) {
 
 float lum(vec2 id) { return cell(clamp(id, vec2(0.0), uGrid - 1.0)).r; }
 
+// Interleaved gradient noise as the per-dot threshold. Bayer's 8x8 grid aligns
+// with the 2x4 Braille cell structure and shows up as a hard 4-column repeat;
+// IGN has no periodic structure but is still a pure function of position, so it
+// never shimmers between frames the way white noise would.
+float ign(vec2 p) {
+  return fract(52.9829189 * fract(0.06711056 * p.x + 0.00583715 * p.y));
+}
+
+/**
+ * One Braille cell. The field is rendered at 2x horizontally and 4x vertically
+ * so every dot maps to exactly one field texel - no averaging, no guessing.
+ *
+ * Unicode's dot numbering is not raster order:
+ *   dot1 (0,0)=0x01  dot4 (1,0)=0x08
+ *   dot2 (0,1)=0x02  dot5 (1,1)=0x10
+ *   dot3 (0,2)=0x04  dot6 (1,2)=0x20
+ *   dot7 (0,3)=0x40  dot8 (1,3)=0x80
+ */
+float brailleCell(vec2 id, float black, float gamma) {
+  float bits = 0.0;
+  for (int sx = 0; sx < 2; sx++) {
+    for (int sy = 0; sy < 4; sy++) {
+      // gl_FragCoord is bottom-up; Braille rows read top-down.
+      vec2 sub = vec2(id.x * 2.0 + float(sx), id.y * 4.0 + float(3 - sy));
+      vec4 f = texture(uField, (sub + 0.5) / (uGrid * vec2(2.0, 4.0)));
+      float L = clamp(max(f.r, f.b) + f.g * 1.1 * (0.35 + 0.65 * f.r), 0.0, 1.0);
+      L = pow(clamp((L - black) / (1.0 - black), 0.0, 1.0), gamma);
+      if (L > ign(sub)) {
+        bits += (sy < 3) ? exp2(float(sy + 3 * sx)) : exp2(float(6 + sx));
+      }
+    }
+  }
+  return bits;
+}
+
 void main() {
   vec2 id = floor(gl_FragCoord.xy);
+
+  if (uBraille > 0.5) {
+    vec4 c = cell(id);
+    fragColor = vec4(
+      brailleCell(id, uBlack, uGamma) / 255.0,
+      clamp(c.b * 1.6, 0.0, 1.0),
+      c.g,
+      1.0
+    );
+    return;
+  }
+
   vec4 f = cell(id);
 
   float diskL = f.r;
@@ -304,7 +352,7 @@ uniform sampler2D uCells;
 uniform sampler2D uAtlas;
 uniform vec2  uGrid;
 uniform vec2  uResolution;
-uniform float uAtlasCount;
+uniform vec2  uAtlasGrid;   // glyphs per row, rows
 uniform vec3  uInk;      // disk / structure
 uniform vec3  uAccent;   // photon ring + headline
 uniform float uOpacity;
@@ -321,7 +369,8 @@ void main() {
   vec4 c = texture(uCells, (id + 0.5) / uGrid);
   float idx = floor(c.r * 255.0 + 0.5);
 
-  vec2 auv = vec2((idx + f.x) / uAtlasCount, f.y);
+  vec2 slot = vec2(mod(idx, uAtlasGrid.x), floor(idx / uAtlasGrid.x));
+  vec2 auv = (slot + vec2(f.x, 1.0 - f.y)) / uAtlasGrid;
   float ink = texture(uAtlas, auv).a;
 
   vec3 col = mix(uInk, uAccent, clamp(c.g + c.b * 0.9, 0.0, 1.0));

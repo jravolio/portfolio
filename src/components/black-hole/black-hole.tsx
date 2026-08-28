@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePrefersReducedMotion } from "@/hooks/use-reduced-motion";
-import { createRenderer, type Renderer, type Stats } from "@/lib/ascii/renderer";
+import { createRenderer, type Mode, type Renderer, type Stats } from "@/lib/ascii/renderer";
 
 type Props = {
   /** The baked frame, inlined by the server. First paint, and the fallback. */
   staticFrame: string;
   headline: string;
   labels: { halt: string; resume: string; alt: string; reducedMotionNote: string };
+  mode?: Mode;
   /** Where the hole sits, in normalised screen units. Right of centre by default. */
   centerX?: number;
   centerY?: number;
@@ -35,6 +36,7 @@ export function BlackHole({
   centerX = 0.42,
   centerY = 0,
   scale = 11,
+  mode = "braille",
   onStats,
 }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -71,6 +73,12 @@ export function BlackHole({
         fontFamily:
           getComputedStyle(document.documentElement).getPropertyValue("--font-departure").trim() ||
           "monospace",
+        // Departure Mono has 0 of the 256 Braille patterns; Commit Mono has all
+        // of them. Measured from both cmaps, not assumed.
+        brailleFontFamily:
+          getComputedStyle(document.documentElement).getPropertyValue("--font-commit").trim() ||
+          "monospace",
+        mode,
         onStats: (s) => onStats?.(s),
       });
     } catch {
@@ -125,7 +133,17 @@ export function BlackHole({
       rendererRef.current = null;
       setLive(false);
     };
+    // `mode` is deliberately excluded: it seeds the initial renderer, and the
+    // effect below swaps it live. Including it here would tear down and rebuild
+    // the WebGL context on every toggle.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reduced, headline, syncColors, centerX, centerY, scale, onStats]);
+
+  // Swapping the atlas and rebuilding the field target is cheap; recreating the
+  // WebGL context is not, so this lives outside the effect above.
+  useEffect(() => {
+    rendererRef.current?.setMode(mode);
+  }, [mode]);
 
   function togglePause() {
     const r = rendererRef.current;

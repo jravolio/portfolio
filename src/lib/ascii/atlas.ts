@@ -45,8 +45,12 @@ export const EDGE_GLYPHS = ["_", "/", "|", "\\"] as const;
 
 export type Atlas = {
   texture: HTMLCanvasElement;
-  /** number of glyph columns in the atlas */
+  /** total glyphs */
   count: number;
+  /** glyphs per atlas row. 256 Braille cells in one row would be 3584px at
+   *  DPR 2; a 16x16 grid keeps it well inside every texture-size limit. */
+  atlasCols: number;
+  atlasRows: number;
   /** how many of those are ramp glyphs (the rest are directional) */
   rampCount: number;
   cellW: number;
@@ -128,10 +132,12 @@ export function buildAtlas(fontFamily: string, dpr: number): Atlas {
 
   const chars = [...ramp.map((r) => r.ch), ...EDGE_GLYPHS];
   const count = chars.length;
+  const atlasCols = count;
+  const atlasRows = 1;
 
   const canvas = document.createElement("canvas");
-  canvas.width = cellW * count;
-  canvas.height = cellH;
+  canvas.width = cellW * atlasCols;
+  canvas.height = cellH * atlasRows;
   const ctx = canvas.getContext("2d")!;
   ctx.font = font;
   ctx.textAlign = "center";
@@ -148,10 +154,89 @@ export function buildAtlas(fontFamily: string, dpr: number): Atlas {
   return {
     texture: canvas,
     count,
+    atlasCols,
+    atlasRows,
     rampCount: ramp.length,
     cellW,
     cellH,
     coverage: ramp.map((r) => r.cov),
     chars,
+  };
+}
+
+
+/**
+ * Braille atlas: the full U+2800-28FF block, 256 patterns.
+ *
+ * Each cell is a 2x4 dot matrix, so a Braille render carries EIGHT times the
+ * effective resolution of a ramp render on the same character grid. That is
+ * the entire reason to do it: the field stops looking like text standing in for
+ * a picture and starts looking like a picture.
+ *
+ * Departure Mono has 0 of the 256 patterns (measured from its cmap), so this
+ * MUST come from Commit Mono. A missing glyph would be substituted by the
+ * fallback face at the fallback's advance width, silently breaking the 7px
+ * lattice - which is exactly what `isSupported` exists to prevent.
+ */
+export function buildBrailleAtlas(fontFamily: string, dpr: number): Atlas {
+  const scale = Math.max(1, Math.round(dpr));
+  const cellW = 7 * scale;
+  const cellH = 14 * scale;
+
+  if (!isSupported(fontFamily, "\u28FF")) {
+    throw new Error(`font "${fontFamily}" has no Braille patterns`);
+  }
+
+  const atlasCols = 16;
+  const atlasRows = 16;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = cellW * atlasCols;
+  canvas.height = cellH * atlasRows;
+  const ctx = canvas.getContext("2d")!;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#fff";
+
+  // Commit Mono is not a pixel font, so a fractional size is fine here. Pick
+  // the size whose full-block glyph best fills the cell without clipping.
+  const probe = document.createElement("canvas");
+  probe.width = cellW;
+  probe.height = cellH;
+  const pctx = probe.getContext("2d", { willReadFrequently: true })!;
+  pctx.textAlign = "center";
+  pctx.textBaseline = "middle";
+  let best = 12 * scale;
+  let bestCov = 0;
+  for (let px = 10 * scale; px <= 20 * scale; px += scale * 0.5) {
+    pctx.font = `${px}px ${fontFamily}`;
+    const cov = measureCoverage(pctx, "\u28FF", cellW, cellH);
+    if (cov > bestCov) {
+      bestCov = cov;
+      best = px;
+    }
+  }
+  ctx.font = `${best}px ${fontFamily}`;
+
+  for (let i = 0; i < 256; i++) {
+    const col = i % atlasCols;
+    const row = Math.floor(i / atlasCols);
+    ctx.fillText(
+      String.fromCharCode(0x2800 + i),
+      col * cellW + cellW / 2,
+      row * cellH + cellH / 2,
+    );
+  }
+
+  return {
+    texture: canvas,
+    count: 256,
+    atlasCols,
+    atlasRows,
+    rampCount: 256,
+    cellW,
+    cellH,
+    coverage: [],
+    chars: [],
   };
 }
