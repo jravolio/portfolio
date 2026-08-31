@@ -80,6 +80,11 @@ sync stall.
 Physics constants live in `shaders.ts`; the CPU twin in `scripts/bake-blackhole.mjs` uses
 the same maths and is parameterised by `BH_*` env vars for tuning. Keep the two in parity.
 
+The beaming exponent is **3.0**, near the textbook 3+alpha. It was detuned to 1.9 to keep the
+receding limb above the ramp floor, and that flattened the one cue that makes the shadow legible:
+at 3.0 the approaching side throws a bright crescent right against the shadow, and the silhouette
+reads instantly.
+
 The viewing angle is **1.15 rad**, fixed: looking down onto the disk from a little above
 its plane, so you see its top surface and the lensed far side arcing over the shadow.
 

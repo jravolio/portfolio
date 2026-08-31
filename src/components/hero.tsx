@@ -47,7 +47,7 @@ export function Hero(props: Props) {
       <BlackHole
         staticFrame={props.staticFrame}
         headline={props.name.toUpperCase()}
-        centerX={narrow ? 0 : 0.44}
+        centerX={narrow ? 0 : 0.92}
         centerY={narrow ? -0.78 : 0}
         scale={narrow ? 13 : 9}
         mode={mode}

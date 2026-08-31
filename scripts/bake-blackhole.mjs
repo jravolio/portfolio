@@ -26,7 +26,7 @@ const R_OUT = Number(process.env.BH_ROUT ?? 11.0); // outer edge. Physically the
 const B_CRIT = (3 * Math.sqrt(3)) / 2; // 2.598 - the APPARENT shadow radius.
 // Theory says 3+alpha. 1.9 keeps the receding limb above the ramp floor: at
 // 13 glyph levels the textbook exponent renders the dim side as empty space.
-const BEAM = Number(process.env.BH_BEAM ?? 1.9);
+const BEAM = Number(process.env.BH_BEAM ?? 3.0);
 const OPACITY = 0.9;
 const N_STEPS = Number(process.env.BH_STEPS ?? 96); // CPU is cheap here; the GPU runs 40
 // 1.25 rad off face-on. Below ~1.0 the far side of the disk does not bend far

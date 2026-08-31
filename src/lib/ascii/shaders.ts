@@ -36,7 +36,11 @@ out vec4 fragColor;
 const float R_IN    = 3.0;
 const float R_OUT   = 11.0;
 const float B_CRIT  = 2.598076211;   // 3*sqrt(3)/2 - the APPARENT shadow radius
-const float BEAM    = 1.9;
+// Relativistic beaming exponent. Theory says 3+alpha; this was detuned to 1.9
+// to keep the receding limb above the ramp floor, and that flattened the one
+// cue that makes the shadow legible. At 3.0 the approaching side throws a
+// bright crescent right against the shadow, which is what draws the silhouette.
+const float BEAM    = 3.0;
 const float OPACITY = 0.9;
 const float TAU     = 6.28318530718;
 
