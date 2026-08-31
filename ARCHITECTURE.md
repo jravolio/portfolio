@@ -122,8 +122,9 @@ allocated at `cols*2 x rows*4` so every Braille dot maps to exactly one field te
 
 Braille is the only shipped mode. The ramp path survives underneath as a silent fallback for a
 face without the Braille block (`buildBrailleAtlas` throws, the renderer catches and drops to
-`ramp`), but nothing user-facing selects it. The hero carries no stats readout: the field runs to
-the section boundary instead of under a bar.
+`ramp`), but nothing user-facing selects it. The hero carries no stats readout and no visible pause button: the field runs
+to the section boundary instead of under a bar. The pause control still exists for SC 2.2.2,
+using the skip-link pattern - out of the layout until it takes keyboard focus.
 
 ### Spiral structure
 

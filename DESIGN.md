@@ -85,10 +85,15 @@ Scale: 11 / 22 / 33 / 44 / 66px on 14 / 28 / 42 / 56 / 70px line boxes.
 Ease-out only (`--ease-out-quart`, `--ease-out-expo`). No bounce, no elastic. One
 spectacle: the field. Everything below the hero is flat and instant.
 
-Two exceptions earn their place. The device toggle dissolves pixel-by-pixel from the
-centre over ~720ms between a sun and a crescent moon, both drawn in half-blocks on a 3x3
-cell grid. That is the right gesture for a raster device repainting itself, and Departure
-Mono has no dingbats, so the icons are built from the half-block set it does carry. The
+Two exceptions earn their place. The theme toggle dissolves pixel-by-pixel from the centre
+over ~720ms between the words `[ light ]` and `[ dark ]`, which is the right gesture for a
+raster device repainting itself.
+
+An ASCII sun and moon were built for that control and removed. Departure Mono has no
+dingbats at all, so they had to be drawn from half-blocks, and at 11px in a 3x3 cell they
+read as noise rather than as icons. **At this size the word beats the picture** - which is
+the whole argument for a text-mode site, and worth remembering before reaching for an
+icon again. The
 contact heading resolves out of the field's own ramp glyphs, once, on first scroll
 into view.
 

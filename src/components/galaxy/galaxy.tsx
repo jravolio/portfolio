@@ -173,18 +173,18 @@ export function Galaxy({
       </div>
 
       {live ? (
-        // SC 2.2.2: the loop auto-starts, runs past five seconds and sits
-        // alongside content, so a pause control is a Level A requirement.
-        // Pinned to the hero's bottom-right, in the readout's row.
-        <div className="absolute bottom-3 right-4 z-10 md:right-8">
-          <button
-            type="button"
-            onClick={togglePause}
-            className="border border-rule bg-bg px-2 py-0.5 text-chrome text-dim transition-colors hover:border-amber hover:text-amber"
-          >
-            [ {paused ? labels.resume : labels.halt} ]
-          </button>
-        </div>
+        // SC 2.2.2 is Level A and applies here: the loop auto-starts, runs past
+        // five seconds and sits alongside content, so a pause MECHANISM is
+        // required. It is not required to be permanently visible, so this uses
+        // the skip-link pattern - out of the layout until it takes focus, at
+        // which point it is a real, reachable, labelled control.
+        <button
+          type="button"
+          onClick={togglePause}
+          className="sr-only z-20 focus:not-sr-only focus:absolute focus:bottom-3 focus:right-4 focus:border focus:border-amber focus:bg-bg focus:px-2 focus:py-0.5 focus:text-chrome focus:text-amber md:focus:right-8"
+        >
+          [ {paused ? labels.resume : labels.halt} ]
+        </button>
       ) : null}
 
       {reduced ? <p className="sr-only">{labels.reducedMotionNote}</p> : null}
