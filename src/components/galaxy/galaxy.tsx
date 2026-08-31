@@ -1,31 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePrefersReducedMotion } from "@/hooks/use-reduced-motion";
-import { createRenderer, type Renderer, type Stats } from "@/lib/ascii/renderer";
+import { useThemeColors } from "@/hooks/use-theme-colors";
+import { createRenderer, type Renderer } from "@/lib/ascii/renderer";
+import { toUnit } from "@/lib/color";
 
 type Props = {
   /** The baked frame, inlined by the server. First paint, and the fallback. */
   staticFrame: string;
-  labels: { halt: string; resume: string; alt: string; reducedMotionNote: string };
-  /** Where the hole sits, in normalised screen units. Right of centre by default. */
+  labels: { halt: string; resume: string; reducedMotionNote: string };
+  /** Where the galaxy sits, in normalised screen units. Right of centre by default. */
   centerX?: number;
   centerY?: number;
   scale?: number;
-  onStats?: (s: Stats | null) => void;
 };
 
-/** Resolve any CSS colour (including oklch) to 0..1 RGB via canvas 2D. */
-function resolveColor(cssColor: string, fallback: string): [number, number, number] {
-  const c = document.createElement("canvas");
-  c.width = c.height = 1;
-  const ctx = c.getContext("2d", { willReadFrequently: true })!;
-  ctx.fillStyle = "#000";
-  ctx.fillStyle = cssColor || fallback;
-  ctx.fillRect(0, 0, 1, 1);
-  const d = ctx.getImageData(0, 0, 1, 1).data;
-  return [d[0]! / 255, d[1]! / 255, d[2]! / 255];
-}
+// Module constant: this is useThemeColors' effect dependency.
+const TOKENS = {
+  ink: ["--text", "#2B1F11"],
+  accent: ["--amber", "#985704"],
+} as const;
 
 export function Galaxy({
   staticFrame,
@@ -33,116 +28,117 @@ export function Galaxy({
   centerX = 0.42,
   centerY = 0,
   scale = 2.5,
-  onStats,
 }: Props) {
-  const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<Renderer | null>(null);
-  const pausedRef = useRef(false);
   const reduced = usePrefersReducedMotion();
+  const colors = useThemeColors(TOKENS);
 
   const [live, setLive] = useState(false);
   const [paused, setPaused] = useState(false);
 
-  const syncColors = useCallback(() => {
-    const r = rendererRef.current;
-    const host = hostRef.current;
-    if (!r || !host) return;
-    const cs = getComputedStyle(host);
-    r.setColors(
-      resolveColor(cs.getPropertyValue("--text").trim(), "#2B1F11"),
-      resolveColor(cs.getPropertyValue("--amber").trim(), "#985704"),
-      1,
-    );
-  }, []);
+  // Three independent inputs decide whether the loop runs. Holding them as one
+  // value and deriving the answer means the loop's state is never just "whoever
+  // called stop() last" - a tab hidden while offscreen has to stay stopped when
+  // only one of the two clears.
+  const gate = useRef({ onscreen: true, docVisible: true, paused: false });
 
   useEffect(() => {
     if (reduced) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    let r: Renderer | null = null;
+    let renderer: Renderer | null = null;
     try {
-      r = createRenderer({
+      const cs = getComputedStyle(document.documentElement);
+      renderer = createRenderer({
         canvas,
-        fontFamily:
-          getComputedStyle(document.documentElement).getPropertyValue("--font-departure").trim() ||
-          "monospace",
+        fontFamily: cs.getPropertyValue("--font-departure").trim() || "monospace",
         // Departure Mono has 0 of the 256 Braille patterns; Commit Mono has all
         // of them. Measured from both cmaps, not assumed.
-        brailleFontFamily:
-          getComputedStyle(document.documentElement).getPropertyValue("--font-commit").trim() ||
-          "monospace",
-        mode: "braille",
-        onStats: (s) => onStats?.(s),
+        brailleFontFamily: cs.getPropertyValue("--font-commit").trim() || "monospace",
       });
     } catch {
-      r = null;
+      renderer = null;
     }
     // No WebGL2: the baked <pre> stays visible and we are done.
-    if (!r) return;
+    if (!renderer) return;
 
-    const renderer = r;
-    rendererRef.current = renderer;
-    renderer.setCenter(centerX, centerY);
-    renderer.setScale(scale);
-    syncColors();
-    renderer.start();
+    const r = renderer;
+    rendererRef.current = r;
+    const g = gate.current;
+    g.onscreen = true;
+    g.docVisible = !document.hidden;
+    g.paused = false;
+
+    const sync = () => {
+      if (g.onscreen && g.docVisible && !g.paused) r.start();
+      else r.stop();
+    };
+
+    sync();
     setLive(true);
 
     // Kill the loop whenever it cannot be seen. An offscreen rAF loop is pure
     // battery drain, and this gate applies at every quality tier.
     const io = new IntersectionObserver(
       ([entry]) => {
-        if (entry?.isIntersecting && !pausedRef.current) renderer.start();
-        else renderer.stop();
+        g.onscreen = !!entry?.isIntersecting;
+        sync();
       },
       { threshold: 0 },
     );
     io.observe(canvas);
 
     const onVis = () => {
-      if (document.hidden) renderer.stop();
-      else if (!pausedRef.current) renderer.start();
+      g.docVisible = !document.hidden;
+      sync();
     };
     document.addEventListener("visibilitychange", onVis);
 
-    // iOS Safari drops GL contexts on backgrounding.
+    // iOS Safari drops GL contexts on backgrounding. Preventing the default
+    // keeps the canvas eligible for restore; until then the baked frame is
+    // what the reader sees.
     const onLost = (e: Event) => {
       e.preventDefault();
-      renderer.stop();
+      r.stop();
       setLive(false);
     };
     canvas.addEventListener("webglcontextlost", onLost);
 
-
-    const mo = new MutationObserver(syncColors);
-    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-
     return () => {
       io.disconnect();
-      mo.disconnect();
       document.removeEventListener("visibilitychange", onVis);
       canvas.removeEventListener("webglcontextlost", onLost);
-      renderer.dispose();
+      r.dispose();
       rendererRef.current = null;
       setLive(false);
     };
-  }, [reduced, syncColors, centerX, centerY, scale, onStats]);
+  }, [reduced]);
 
+  // Framing is imperative on purpose. These come from a 768px media query in
+  // Hero, and holding them in the effect above would tear down the GL context,
+  // re-rasterise the atlas and reallocate every framebuffer on a resize across
+  // that breakpoint - to change three floats.
+  useEffect(() => {
+    const r = rendererRef.current;
+    if (!r) return;
+    r.setCenter(centerX, centerY);
+    r.setScale(scale);
+  }, [centerX, centerY, scale, live]);
+
+  useEffect(() => {
+    rendererRef.current?.setColors(toUnit(colors.ink), toUnit(colors.accent), 1);
+  }, [colors, live]);
 
   function togglePause() {
     const r = rendererRef.current;
     if (!r) return;
-    if (r.isRunning) {
-      r.stop();
-      pausedRef.current = true;
-      setPaused(true);
-    } else {
-      r.start();
-      pausedRef.current = false;
-      setPaused(false);
-    }
+    const next = !gate.current.paused;
+    gate.current.paused = next;
+    if (next) r.stop();
+    else if (gate.current.onscreen && gate.current.docVisible) r.start();
+    setPaused(next);
   }
 
   return (
@@ -151,7 +147,6 @@ export function Galaxy({
           the page, so it is hidden from assistive tech entirely rather than
           announced as thousands of punctuation marks. */}
       <div
-        ref={hostRef}
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
         style={{ contain: "strict" }}

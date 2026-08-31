@@ -9,19 +9,22 @@ import { SectionNav } from "@/components/chrome/section-nav";
 import { getContent, SITE } from "@/data/resume";
 import { getPostsMeta } from "@/lib/blog";
 
-async function staticFrame() {
-  try {
-    return await readFile(join(process.cwd(), "public", "static", "galaxy.txt"), "utf8");
-  } catch {
-    return "";
-  }
+/**
+ * The baked fallback frame. Deliberately not wrapped in a try/catch: `pnpm
+ * build` runs `bake` before `next build`, so a missing file is a broken build
+ * pipeline, not a runtime condition to degrade around. Swallowing it would ship
+ * an empty hero for every no-JS and reduced-motion reader and say nothing.
+ */
+function staticFrame() {
+  return readFile(join(process.cwd(), "public", "static", "galaxy.txt"), "utf8");
 }
 
 export default async function IndexPage({ params }: { params: Promise<{ lng: string }> }) {
   const { lng } = await params;
   const t = getContent(lng);
-  const frame = await staticFrame();
-  const posts = (await getPostsMeta()).slice(0, 3);
+  // Disjoint reads; no reason to serialise them.
+  const [frame, allPosts] = await Promise.all([staticFrame(), getPostsMeta()]);
+  const posts = allPosts.slice(0, 3);
   const current = t.work[0]!;
 
   const jsonLd: WithContext<Person> = {
@@ -73,7 +76,6 @@ export default async function IndexPage({ params }: { params: Promise<{ lng: str
         labels={{
           halt: t.ui.halt,
           resume: t.ui.resume_playback,
-          alt: t.ui.galaxyAlt,
           reducedMotionNote: t.ui.reducedMotionNote,
           copyEmail: t.ui.copyEmail,
           copied: t.ui.copied,
@@ -88,7 +90,7 @@ export default async function IndexPage({ params }: { params: Promise<{ lng: str
       <section id="work" className="mt-16">
         <div className="flex items-baseline justify-between border-b border-rule pb-2">
           <h2 className="text-chrome text-dim">{t.headings.selectedWork}</h2>
-          <Link href={`/${lng}/work`} className="text-chrome text-dim hover:text-amber">
+          <Link href={`/${lng}/work`} className="chrome-link text-chrome">
             {t.nav.work} →
           </Link>
         </div>
@@ -125,7 +127,7 @@ export default async function IndexPage({ params }: { params: Promise<{ lng: str
         <section id="writing" className="mt-16">
           <div className="flex items-baseline justify-between border-b border-rule pb-2">
             <h2 className="text-chrome text-dim">{t.headings.writing}</h2>
-            <Link href={`/${lng}/writing`} className="text-chrome text-dim hover:text-amber">
+            <Link href={`/${lng}/writing`} className="chrome-link text-chrome">
               {t.ui.allWriting} →
             </Link>
           </div>

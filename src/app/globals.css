@@ -278,6 +278,41 @@
   tab-size: 1;
 }
 
+/* The content column. 896px at 7px/cell is 128 cells, with a 1rem gutter each
+   side so the measure never touches the viewport edge. */
+@utility measure {
+  margin-inline: auto;
+  max-width: min(100% - 2rem, 896px);
+}
+
+/* A bordered control: the site's only button-shaped thing. */
+@utility key {
+  border: 1px solid var(--rule);
+  background: var(--bg);
+  padding: var(--spacing) calc(var(--spacing) * 2);
+  color: var(--dim);
+  transition: color 150ms, border-color 150ms;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--amber);
+    color: var(--amber);
+  }
+}
+
+/* Chrome-weight link. focus-visible is part of the utility so it cannot be
+   omitted at one call site and present at another, which is how four of these
+   ended up keyboard-invisible. */
+@utility chrome-link {
+  color: var(--dim);
+  transition: color 150ms;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--amber);
+  }
+}
+
 @utility rule-h {
   /* A rule drawn in characters, not a 1px div, so it sits on the lattice. */
   &::before {

@@ -20,13 +20,13 @@ export function TopBar({ lng }: { lng: Locale }) {
 
   return (
     <header className="sticky top-0 z-50 border-b border-rule bg-bg/85 backdrop-blur-[2px]">
-      <div className="mx-auto flex max-w-[min(100%-2rem,896px)] items-center justify-between gap-4 py-2">
+      <div className="measure flex items-center justify-between gap-4 py-2">
         <nav aria-label="Primary" className="flex items-center gap-4">
           {items.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="text-chrome text-dim transition-colors duration-150 hover:text-amber focus-visible:text-amber"
+              className="chrome-link text-chrome"
             >
               {item.label}
             </Link>
@@ -37,13 +37,13 @@ export function TopBar({ lng }: { lng: Locale }) {
           <Link
             href={`/${other}`}
             hrefLang={other}
-            className="text-chrome text-dim hover:text-amber"
+            className="chrome-link text-chrome"
           >
             {t.ui.lang}
           </Link>
           <a
             href={SITE.github}
-            className="text-chrome text-dim hover:text-amber"
+            className="chrome-link text-chrome"
             rel="me noreferrer"
             target="_blank"
           >

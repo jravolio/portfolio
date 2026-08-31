@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getContent } from "@/data/resume";
+import { BAKE_COLS, BAKE_ROWS } from "@/lib/ascii/field-constants.mjs";
 
 export async function generateMetadata({
   params,
@@ -28,15 +28,14 @@ function Fig({ n, caption, children }: { n: string; caption: string; children: R
 
 export default async function RenderPage({ params }: { params: Promise<{ lng: string }> }) {
   const { lng } = await params;
-  const t = getContent(lng);
 
   return (
     <article className="pt-10">
       <h1 className="text-display-2 text-ink-hi">render</h1>
       <p className="mt-3 max-w-[70ch] text-body text-dim">
-        {t.nav.render === "render"
-          ? "How the field on the index page is computed. A spiral galaxy in a WebGL2 fragment shader, rasterised into Braille sub-cells. The arms turn as a density wave. Nothing here is a loop or a pasted sprite."
-          : "Como o campo da página inicial é calculado. Uma galáxia espiral em um fragment shader WebGL2, rasterizada em sub-células Braille. Os braços giram como onda de densidade. Nada aqui é um loop ou um sprite colado."}
+        {lng === "pt"
+          ? "Como o campo da página inicial é calculado. Uma galáxia espiral em um fragment shader WebGL2, rasterizada em sub-células Braille. Os braços giram como onda de densidade. Nada aqui é um loop ou um sprite colado."
+          : "How the field on the index page is computed. A spiral galaxy in a WebGL2 fragment shader, rasterised into Braille sub-cells. The arms turn as a density wave. Nothing here is a loop or a pasted sprite."}
       </p>
 
       <div className="prose-terminal prose mt-12 dark:prose-invert">
@@ -126,7 +125,7 @@ export default async function RenderPage({ params }: { params: Promise<{ lng: st
           <code>@</code> covers about 0.42 of its cell in one monospace face and 0.58 in another.
           Hand-ordering a ramp is why naive ASCII looks muddy in the midtones. At boot every
           candidate glyph is rasterised into a 7×14 cell, its alpha integrated, and the pool sorted
-          by actual ink coverage; near-duplicates within 1.5% are dropped because they waste a ramp
+          by actual ink coverage; near-duplicates within 2.8% are dropped because they waste a ramp
           step and cause banding.
         </p>
         <p>
@@ -153,13 +152,15 @@ export default async function RenderPage({ params }: { params: Promise<{ lng: st
         <h2>Three passes, no readback</h2>
         <ol>
           <li>
-            <strong>Field.</strong> Geodesic integration at 2× the cell grid. Outputs disk
-            luminance, analytic ring coverage, and the lensed headline in three channels.
+            <strong>Field.</strong> Closed-form evaluation of the disk, bulge and density wave at
+            2× the cell grid horizontally and 4× vertically &mdash; one texel per Braille dot.
+            Outputs surface brightness and the accent mask in two channels.
           </li>
           <li>
-            <strong>Quantise.</strong> Box-downsample to the cell grid, Sobel in cell space for
-            directional glyphs, 4×4 Bayer dither on the ramp <em>index</em>, and temporal
-            hysteresis against the previous frame.
+            <strong>Quantise.</strong> In Braille, threshold each of the eight dots against
+            interleaved gradient noise. In the ramp fallback, box-downsample to the cell grid,
+            Sobel in cell space for directional glyphs, 4×4 Bayer dither on the ramp <em>index</em>,
+            and temporal hysteresis against the previous frame.
           </li>
           <li>
             <strong>Composite.</strong> One quad sampling a NEAREST glyph atlas.
@@ -181,9 +182,10 @@ export default async function RenderPage({ params }: { params: Promise<{ lng: st
 
         <h2>Degrading</h2>
         <p>
-          The frame you see first is not WebGL at all. It is a pre-baked 100×36 frame produced at
-          build time by the same integrator running on the CPU, shipped inline in the server HTML as
-          a single <code>&lt;pre&gt;</code> with one text node. It is the reduced-motion state, the
+          The frame you see first is not WebGL at all. It is a pre-baked {BAKE_COLS}×{BAKE_ROWS}{" "}
+          frame produced at build time by a CPU twin of the same field, shipped inline in the server
+          HTML as a single <code>&lt;pre&gt;</code> with one text node. Both sides import their
+          structural constants from one module, because two hand-kept copies had already drifted. It is the reduced-motion state, the
           no-JS state, the no-WebGL state, and the first paint before the renderer chunk downloads.
         </p>
         <p>
@@ -194,24 +196,22 @@ export default async function RenderPage({ params }: { params: Promise<{ lng: st
 
         <Fig
           n="1"
-          caption="Quality ladder. Demotion is triggered by a rolling frame-time average over the first 30 frames."
+          caption="Quality ladder. Each demotion is triggered by a rolling frame-time average over 30 frames, after which the probe re-arms and measures again at the new tier. Rows are only ever walked downward."
         >
           <table className="w-full text-left text-chrome">
             <thead>
               <tr className="border-b border-rule text-dim">
                 <th scope="col" className="py-1 pr-6 font-normal">tier</th>
-                <th scope="col" className="py-1 pr-6 font-normal">grid</th>
-                <th scope="col" className="py-1 pr-6 font-normal">steps</th>
-                <th scope="col" className="py-1 pr-6 font-normal">ss</th>
+                <th scope="col" className="py-1 pr-6 font-normal">max cols</th>
+                <th scope="col" className="py-1 pr-6 font-normal">ramp ss</th>
                 <th scope="col" className="py-1 font-normal">trigger</th>
               </tr>
             </thead>
             <tbody className="text-dim">
-              <tr><td className="py-1 pr-6">0</td><td className="py-1 pr-6">232×64</td><td className="py-1 pr-6">64</td><td className="py-1 pr-6">2×</td><td className="py-1">desktop dGPU</td></tr>
-              <tr><td className="py-1 pr-6">1</td><td className="py-1 pr-6">205×57</td><td className="py-1 pr-6">40</td><td className="py-1 pr-6">2×</td><td className="py-1">default</td></tr>
-              <tr><td className="py-1 pr-6">2</td><td className="py-1 pr-6">205×57</td><td className="py-1 pr-6">24</td><td className="py-1 pr-6">1×</td><td className="py-1">frame time &gt; 12ms</td></tr>
-              <tr><td className="py-1 pr-6">3</td><td className="py-1 pr-6">96×42</td><td className="py-1 pr-6">20</td><td className="py-1 pr-6">1×</td><td className="py-1">coarse pointer</td></tr>
-              <tr><td className="py-1 pr-6">—</td><td className="py-1 pr-6">100×36</td><td className="py-1 pr-6">static</td><td className="py-1 pr-6">—</td><td className="py-1">reduced motion, no JS, no WebGL</td></tr>
+              <tr><td className="py-1 pr-6">1</td><td className="py-1 pr-6">260</td><td className="py-1 pr-6">2×</td><td className="py-1">default</td></tr>
+              <tr><td className="py-1 pr-6">2</td><td className="py-1 pr-6">260</td><td className="py-1 pr-6">1×</td><td className="py-1">frame time &gt; 12ms</td></tr>
+              <tr><td className="py-1 pr-6">3</td><td className="py-1 pr-6">110</td><td className="py-1 pr-6">1×</td><td className="py-1">still &gt; 12ms after demoting</td></tr>
+              <tr><td className="py-1 pr-6">&mdash;</td><td className="py-1 pr-6">{BAKE_COLS}</td><td className="py-1 pr-6">&mdash;</td><td className="py-1">reduced motion, no JS, no WebGL</td></tr>
             </tbody>
           </table>
         </Fig>
@@ -225,25 +225,26 @@ export default async function RenderPage({ params }: { params: Promise<{ lng: st
           backgrounding.
         </p>
         <p>
-          There is a visible, keyboard-reachable pause control. WCAG SC 2.2.2 is a Level A
-          requirement and it applies here: the animation starts automatically, runs for more than
-          five seconds, and sits alongside content.
+          There is a keyboard-reachable pause control. WCAG SC 2.2.2 is a Level A requirement and
+          it applies here: the animation starts automatically, runs for more than five seconds, and
+          sits alongside content. SC 2.2.2 requires a <em>mechanism</em>, not a permanently visible
+          button, so it uses the skip-link pattern &mdash; out of the layout until it takes focus,
+          at which point it is a real, reachable, labelled control.
         </p>
 
         <h2>Why any of this is on a portfolio</h2>
         <p>
           Because a portfolio that claims systems ability should be a system, not a picture of one.
-          Everything above is checkable: open devtools and read the shader, check the cell count and
-          frame time in the readout against the grid you are actually looking at, turn on reduced
-          motion and get a single pre-baked frame, turn off JavaScript and still read every word on
-          the site.
+          Everything above is checkable: open devtools and read the shader, count the columns
+          against the grid you are actually looking at, turn on reduced motion and get a single
+          pre-baked frame, turn off JavaScript and still read every word on the site.
         </p>
         <p>
           The field does not respond to the cursor, deliberately. An earlier version mapped pointer
           position to the viewing angle, and it was the wrong instinct: a background that swings
           around when you move the mouse asks to be played with, and this one sits directly beside
           the only two sentences on the page that need reading. It holds still at{" "}
-          <code>incl = 1.15 rad</code>, looking down onto the disk from a little above its plane.
+          <code>incl = 1.0 rad</code>, looking down onto the disk from a little above its plane.
         </p>
       </div>
     </article>

@@ -1,36 +1,27 @@
 import { buildAtlas, buildBrailleAtlas, type Atlas } from "./atlas";
+import { INCL, SCALE, TONE } from "./field-constants.mjs";
 import { FIELD_FRAG, GLYPH_FRAG, QUANT_FRAG, VERT } from "./shaders";
 
-export type Tier = 0 | 1 | 2 | 3;
+/** Quality ladder. Only ever walked downward, by the frame-time probe. */
+type Tier = 1 | 2 | 3;
 
-const TIERS: Record<Tier, { steps: number; ss: number; maxCols: number }> = {
-  0: { steps: 64, ss: 2, maxCols: 300 },
-  1: { steps: 40, ss: 2, maxCols: 260 },
-  2: { steps: 24, ss: 1, maxCols: 260 },
-  3: { steps: 20, ss: 1, maxCols: 110 },
+const TIERS: Record<Tier, { ss: number; maxCols: number }> = {
+  1: { ss: 2, maxCols: 260 },
+  2: { ss: 1, maxCols: 260 },
+  3: { ss: 1, maxCols: 110 },
 };
 
-export type Mode = "ramp" | "braille";
+type Mode = "ramp" | "braille";
+
+/** Sobel magnitude above which a cell takes a directional glyph instead of a
+ *  ramp step. Gated hard: lower and the whole disk turns into slashes. */
+const EDGE_THRESHOLD = 2.4;
 
 export type RendererOptions = {
   canvas: HTMLCanvasElement;
   fontFamily: string;
   /** Must contain U+2800-28FF. Departure Mono does not; Commit Mono does. */
   brailleFontFamily: string;
-  mode?: Mode;
-  onStats?: (s: Stats) => void;
-};
-
-export type Stats = {
-  cols: number;
-  rows: number;
-  steps: number;
-  frameMs: number;
-  incl: number;
-  tier: Tier;
-  mode: Mode;
-  /** Addressable samples: cells in ramp mode, dots in Braille mode. */
-  samples: number;
 };
 
 function compile(gl: WebGL2RenderingContext, type: number, src: string) {
@@ -45,7 +36,18 @@ function compile(gl: WebGL2RenderingContext, type: number, src: string) {
   return sh;
 }
 
-function program(gl: WebGL2RenderingContext, frag: string) {
+type Program = { p: WebGLProgram; u: Record<string, WebGLUniformLocation | null> };
+
+/**
+ * Link a program and resolve every uniform location once.
+ *
+ * getUniformLocation is a string-keyed lookup across the JS/native boundary and
+ * through the command-buffer validator. Calling it per frame per uniform - 27 of
+ * them across three passes - is ~1,600 lookups a second that all return the same
+ * constants. Enumerating ACTIVE_UNIFORMS means there is no name list to keep in
+ * sync with the GLSL either.
+ */
+function program(gl: WebGL2RenderingContext, frag: string): Program {
   const p = gl.createProgram()!;
   const vs = compile(gl, gl.VERTEX_SHADER, VERT);
   const fs = compile(gl, gl.FRAGMENT_SHADER, frag);
@@ -57,7 +59,14 @@ function program(gl: WebGL2RenderingContext, frag: string) {
   }
   gl.deleteShader(vs);
   gl.deleteShader(fs);
-  return p;
+
+  const u: Record<string, WebGLUniformLocation | null> = {};
+  const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS) as number;
+  for (let i = 0; i < n; i++) {
+    const name = gl.getActiveUniform(p, i)!.name;
+    u[name] = gl.getUniformLocation(p, name);
+  }
+  return { p, u };
 }
 
 function makeTarget(gl: WebGL2RenderingContext, w: number, h: number, filter: number) {
@@ -76,8 +85,7 @@ function makeTarget(gl: WebGL2RenderingContext, w: number, h: number, filter: nu
 }
 
 export function createRenderer(opts: RendererOptions) {
-  const { canvas, fontFamily, brailleFontFamily, onStats } = opts;
-  let mode: Mode = opts.mode ?? "braille";
+  const { canvas, fontFamily, brailleFontFamily } = opts;
 
   const gl = canvas.getContext("webgl2", {
     alpha: true,
@@ -90,26 +98,21 @@ export function createRenderer(opts: RendererOptions) {
   if (!gl) return null;
 
   const dprNow = window.devicePixelRatio || 1;
-  const rampAtlas: Atlas = buildAtlas(fontFamily, dprNow);
-  let brailleAtlas: Atlas | null = null;
+  let mode: Mode = "braille";
+  let atlas: Atlas;
   try {
-    brailleAtlas = buildBrailleAtlas(brailleFontFamily, dprNow);
+    atlas = buildBrailleAtlas(brailleFontFamily, dprNow);
   } catch {
-    // Face has no Braille block. Stay on the ramp rather than let the browser
-    // substitute a face at the wrong advance width and break the lattice.
-    brailleAtlas = null;
+    // Face has no Braille block. Fall back to the ramp rather than let the
+    // browser substitute a face at the wrong advance width and break the
+    // lattice. Write-once: nothing can switch modes after this point.
+    atlas = buildAtlas(fontFamily, dprNow);
     mode = "ramp";
-  }
-  const atlasOf = (m: Mode) => (m === "braille" && brailleAtlas ? brailleAtlas : rampAtlas);
-
-  function uploadAtlas(a: Atlas) {
-    gl!.bindTexture(gl!.TEXTURE_2D, atlasTex);
-    gl!.texImage2D(gl!.TEXTURE_2D, 0, gl!.RGBA8, gl!.RGBA, gl!.UNSIGNED_BYTE, a.texture);
   }
 
   const atlasTex = gl.createTexture()!;
   gl.bindTexture(gl.TEXTURE_2D, atlasTex);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, atlasOf(mode).texture);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, atlas.texture);
   // NEAREST: the pixel font must not be smeared by the sampler.
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
@@ -120,6 +123,9 @@ export function createRenderer(opts: RendererOptions) {
   const pQuant = program(gl, QUANT_FRAG);
   const pGlyph = program(gl, GLYPH_FRAG);
   const vao = gl.createVertexArray();
+
+  const tone = TONE[mode];
+  const braille = mode === "braille";
 
   let tier: Tier = 1;
   let cols = 0;
@@ -134,34 +140,28 @@ export function createRenderer(opts: RendererOptions) {
   let opacity = 1;
 
   let time = 0;
-  // Fixed inclination, ~57 degrees off face-on: open enough to show the arms,
-  // tilted enough to read as a disk in space rather than a flat pinwheel. The
-  // field does not follow the cursor - a background that swings around under
-  // the pointer reads as a toy and pulls the eye off the copy beside it.
-  const incl = 1.0;
   let center: [number, number] = [0, 0];
-  // r_s per half-grid-height. Lower = the hole fills more of the frame.
-  // Disk scale lengths per half-grid-height. The exponential disk is
-  // effectively gone by ~4 Rs, so this frames roughly that.
-  let scale = 2.5;
+  let scale: number = SCALE;
 
-  // Braille resolves 8x more samples, so it shows far more of the field's low
-// end; it needs a higher black point and a steeper curve than the ramp to keep
-// the outer falloff from reading as an even dither texture.
-const TONE = {
-  ramp: { black: 0.14, gamma: 0.75 },
-  braille: { black: 0.18, gamma: 1.05 },
-};
-const tune = { nameGain: 0.62, edge: 2.4, skyZ: -26.0 };
-if (typeof window !== "undefined") (window as unknown as Record<string, unknown>).__bh = tune;
-
-let raf = 0;
+  let raf = 0;
   let running = false;
   let lastT = 0;
-  let frameMs = 0;
   const probe: number[] = [];
 
+  // getBoundingClientRect inside rAF is a layout read, and the page around this
+  // canvas mutates text on a timer, so every frame's read risks a forced
+  // synchronous reflow of the whole document. Observe instead, and measure only
+  // when the box has actually changed.
+  let dirty = true;
+  const ro = new ResizeObserver(() => {
+    dirty = true;
+  });
+  ro.observe(canvas);
+
   function resize() {
+    if (!dirty && field) return;
+    dirty = false;
+
     const rect = canvas.getBoundingClientRect();
     const t = TIERS[tier];
     // Fixed cell, variable grid: the terminal model. Not fixed-cols with a
@@ -182,8 +182,8 @@ let raf = 0;
         gl!.deleteFramebuffer(target.fbo);
       }
     }
-    const fx = mode === "braille" ? 2 : t.ss;
-    const fy = mode === "braille" ? 4 : t.ss;
+    const fx = braille ? 2 : t.ss;
+    const fy = braille ? 4 : t.ss;
     field = makeTarget(gl!, cols * fx, rows * fy, gl!.LINEAR);
     cellsA = makeTarget(gl!, cols, rows, gl!.NEAREST);
     cellsB = makeTarget(gl!, cols, rows, gl!.NEAREST);
@@ -193,23 +193,18 @@ let raf = 0;
   function draw(dt: number) {
     if (!gl || !field || !cellsA || !cellsB) return;
     const t = TIERS[tier];
-
-    // Exponential smoothing, frame-rate independent. A constant lerp factor
-    // would move at different speeds on 60Hz and 120Hz displays.
     time += dt;
-
 
     // --- pass 1: the field
     gl.bindFramebuffer(gl.FRAMEBUFFER, field.fbo);
     gl.viewport(0, 0, field.w, field.h);
-    gl.useProgram(pField);
-    gl.uniform2f(gl.getUniformLocation(pField, "uField"), field.w, field.h);
-    gl.uniform1f(gl.getUniformLocation(pField, "uCellAspect"), 0.5);
-    gl.uniform1f(gl.getUniformLocation(pField, "uGridAspect"), cols / rows);
-    gl.uniform1f(gl.getUniformLocation(pField, "uScale"), scale);
-    gl.uniform1f(gl.getUniformLocation(pField, "uIncl"), incl);
-    gl.uniform1f(gl.getUniformLocation(pField, "uTime"), time);
-    gl.uniform2f(gl.getUniformLocation(pField, "uCenter"), center[0], center[1]);
+    gl.useProgram(pField.p);
+    gl.uniform2f(pField.u.uField!, field.w, field.h);
+    gl.uniform1f(pField.u.uGridAspect!, cols / rows);
+    gl.uniform1f(pField.u.uScale!, scale);
+    gl.uniform1f(pField.u.uIncl!, INCL);
+    gl.uniform1f(pField.u.uTime!, time);
+    gl.uniform2f(pField.u.uCenter!, center[0], center[1]);
     gl.bindVertexArray(vao);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
@@ -218,23 +213,22 @@ let raf = 0;
     const dst = cellsB;
     gl.bindFramebuffer(gl.FRAMEBUFFER, dst.fbo);
     gl.viewport(0, 0, dst.w, dst.h);
-    gl.useProgram(pQuant);
+    gl.useProgram(pQuant.p);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, field.tex);
-    gl.uniform1i(gl.getUniformLocation(pQuant, "uField"), 0);
+    gl.uniform1i(pQuant.u.uField!, 0);
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, src.tex);
-    gl.uniform1i(gl.getUniformLocation(pQuant, "uPrev"), 1);
-    gl.uniform2f(gl.getUniformLocation(pQuant, "uGrid"), cols, rows);
-    gl.uniform1f(gl.getUniformLocation(pQuant, "uSS"), mode === "braille" ? 2 : t.ss);
-    gl.uniform1f(gl.getUniformLocation(pQuant, "uBraille"), mode === "braille" ? 1 : 0);
-    gl.uniform1f(gl.getUniformLocation(pQuant, "uRampCount"), atlasOf(mode).rampCount);
-    gl.uniform1f(gl.getUniformLocation(pQuant, "uCellAspect"), 0.5);
-    gl.uniform1f(gl.getUniformLocation(pQuant, "uEdgeThresh"), tune.edge);
-    gl.uniform1f(gl.getUniformLocation(pQuant, "uHysteresis"), 0.575);
-    gl.uniform1f(gl.getUniformLocation(pQuant, "uFirstFrame"), firstFrame ? 1 : 0);
-    gl.uniform1f(gl.getUniformLocation(pQuant, "uBlack"), TONE[mode].black);
-    gl.uniform1f(gl.getUniformLocation(pQuant, "uGamma"), TONE[mode].gamma);
+    gl.uniform1i(pQuant.u.uPrev!, 1);
+    gl.uniform2f(pQuant.u.uGrid!, cols, rows);
+    gl.uniform1f(pQuant.u.uSS!, t.ss);
+    gl.uniform1f(pQuant.u.uBraille!, braille ? 1 : 0);
+    gl.uniform1f(pQuant.u.uRampCount!, atlas.rampCount);
+    gl.uniform1f(pQuant.u.uEdgeThresh!, EDGE_THRESHOLD);
+    gl.uniform1f(pQuant.u.uHysteresis!, 0.575);
+    gl.uniform1f(pQuant.u.uFirstFrame!, firstFrame ? 1 : 0);
+    gl.uniform1f(pQuant.u.uBlack!, tone.black);
+    gl.uniform1f(pQuant.u.uGamma!, tone.gamma);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
     cellsA = dst;
@@ -248,23 +242,19 @@ let raf = 0;
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    gl.useProgram(pGlyph);
+    gl.useProgram(pGlyph.p);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, cellsA.tex);
-    gl.uniform1i(gl.getUniformLocation(pGlyph, "uCells"), 0);
+    gl.uniform1i(pGlyph.u.uCells!, 0);
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, atlasTex);
-    gl.uniform1i(gl.getUniformLocation(pGlyph, "uAtlas"), 1);
-    gl.uniform2f(gl.getUniformLocation(pGlyph, "uGrid"), cols, rows);
-    gl.uniform2f(gl.getUniformLocation(pGlyph, "uResolution"), canvas.width, canvas.height);
-    gl.uniform2f(
-      gl.getUniformLocation(pGlyph, "uAtlasGrid"),
-      atlasOf(mode).atlasCols,
-      atlasOf(mode).atlasRows,
-    );
-    gl.uniform3fv(gl.getUniformLocation(pGlyph, "uInk"), ink);
-    gl.uniform3fv(gl.getUniformLocation(pGlyph, "uAccent"), accent);
-    gl.uniform1f(gl.getUniformLocation(pGlyph, "uOpacity"), opacity);
+    gl.uniform1i(pGlyph.u.uAtlas!, 1);
+    gl.uniform2f(pGlyph.u.uGrid!, cols, rows);
+    gl.uniform2f(pGlyph.u.uResolution!, canvas.width, canvas.height);
+    gl.uniform2f(pGlyph.u.uAtlasGrid!, atlas.atlasCols, atlas.atlasRows);
+    gl.uniform3fv(pGlyph.u.uInk!, ink);
+    gl.uniform3fv(pGlyph.u.uAccent!, accent);
+    gl.uniform1f(pGlyph.u.uOpacity!, opacity);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 
@@ -279,31 +269,25 @@ let raf = 0;
     const t0 = performance.now();
     resize();
     draw(dt);
-    frameMs = performance.now() - t0;
 
-    // Demote on a rolling average over the first 30 frames.
+    // Demote on a rolling average over 30 frames, then re-arm and measure again
+    // at the new tier. Without the reset the probe fires exactly once, so a
+    // device too slow for tier 2 could never reach tier 3 and the bottom of the
+    // ladder was unreachable config.
     if (probe.length < 30) {
-      probe.push(frameMs);
+      probe.push(performance.now() - t0);
       if (probe.length === 30) {
         const avg = probe.reduce((a, b) => a + b, 0) / probe.length;
         if (avg > 12 && tier < 3) {
           tier = (tier + 1) as Tier;
+          dirty = true;
           cols = 0;
           resize();
+          probe.length = 0;
         }
       }
     }
 
-    onStats?.({
-      cols,
-      rows,
-      steps: TIERS[tier].steps,
-      frameMs,
-      incl,
-      tier,
-      mode,
-      samples: mode === "braille" ? cols * rows * 8 : cols * rows,
-    });
     raf = requestAnimationFrame(loop);
   }
 
@@ -326,41 +310,23 @@ let raf = 0;
       resize();
       draw(0);
     },
-    /** Move the hole off-centre in normalised screen units. */
+    /** Move the galaxy off-centre in normalised screen units. */
     setCenter(x: number, y: number) {
       center = [x, y];
     },
-    /** r_s per half-grid-height. Lower = the hole fills more of the frame. */
+    /** Disk scale lengths per half-grid-height. Lower = it fills more of the frame. */
     setScale(v: number) {
       scale = v;
     },
-    get mode() {
-      return mode;
-    },
-    get hasBraille() {
-      return brailleAtlas !== null;
-    },
-    setMode(m: Mode) {
-      if (m === mode || (m === "braille" && !brailleAtlas)) return;
-      mode = m;
-      uploadAtlas(atlasOf(mode));
-      cols = 0; // force the field target to be rebuilt at the new resolution
-      resize();
-    },
-    setTier(t: Tier) {
-      if (t === tier) return;
-      tier = t;
-      cols = 0;
-      resize();
-    },
-    setColors(inkHex: [number, number, number], accentHex: [number, number, number], op: number) {
-      ink = inkHex;
-      accent = accentHex;
+    setColors(inkRgb: [number, number, number], accentRgb: [number, number, number], op: number) {
+      ink = inkRgb;
+      accent = accentRgb;
       opacity = op;
     },
     dispose() {
       running = false;
       cancelAnimationFrame(raf);
+      ro.disconnect();
       for (const target of [field, cellsA, cellsB]) {
         if (target) {
           gl.deleteTexture(target.tex);
@@ -368,9 +334,9 @@ let raf = 0;
         }
       }
       gl.deleteTexture(atlasTex);
-      gl.deleteProgram(pField);
-      gl.deleteProgram(pQuant);
-      gl.deleteProgram(pGlyph);
+      gl.deleteProgram(pField.p);
+      gl.deleteProgram(pQuant.p);
+      gl.deleteProgram(pGlyph.p);
       gl.getExtension("WEBGL_lose_context")?.loseContext();
     },
   };

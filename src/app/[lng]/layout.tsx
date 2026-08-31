@@ -82,13 +82,13 @@ export default async function LocaleLayout({
 
           <TopBar lng={lng as Locale} />
 
-          <main id="main" className="mx-auto w-full max-w-[min(100%-2rem,896px)] pb-14">
+          <main id="main" className="measure w-full pb-14">
             {children}
           </main>
 
           <footer className="mt-16">
             <StatusBar items={t.ticker} />
-            <div className="mx-auto flex max-w-[min(100%-2rem,896px)] flex-wrap items-center justify-between gap-2 py-4 text-chrome text-dim">
+            <div className="measure flex flex-wrap items-center justify-between gap-2 py-4 text-chrome text-dim">
               <span>
                 {SITE.name} · {SITE.location[lng === "pt" ? "pt" : "en"]}
               </span>

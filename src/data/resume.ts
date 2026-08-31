@@ -13,7 +13,6 @@ export const DEFAULT_LOCALE: Locale = "en";
 export const SITE = {
   url: "https://devjravolio.com",
   name: "Julio Cesar Avolio",
-  initials: "JA",
   email: "jravolio892@gmail.com",
   tel: "+55 21 98807-1858",
   github: "https://github.com/jravolio",
@@ -42,7 +41,6 @@ export type Project = {
   stack: string[];
   live?: string;
   repo?: string;
-  archived?: boolean;
 };
 
 export type Education = {
@@ -69,24 +67,18 @@ export type Dictionary = {
     writing: string;
     education: string;
     contact: string;
-    archive: string;
-    stack: string;
   };
   ui: {
     copyEmail: string;
     copied: string;
     allWriting: string;
-    resume: string;
     present: string;
     halt: string;
     resume_playback: string;
     theme: string;
     lang: string;
     skipToContent: string;
-    commandHint: string;
     reducedMotionNote: string;
-    galaxyAlt: string;
-    backToIndex: string;
     readRender: string;
   };
   work: Role[];
@@ -142,26 +134,19 @@ export const CONTENT: Record<Locale, Dictionary> = {
       writing: "writing",
       education: "education",
       contact: "contact",
-      archive: "archive",
-      stack: "stack",
     },
     ui: {
       copyEmail: "copy email",
       copied: "copied",
       allWriting: "all writing",
-      resume: "resume.pdf",
       present: "present",
       halt: "halt",
       resume_playback: "resume",
       theme: "switch between light and dark mode",
       lang: "português",
       skipToContent: "skip to content",
-      commandHint: "press ⌘K",
       reducedMotionNote:
         "Reduced motion is on, so the field below is a single pre-rendered frame.",
-      galaxyAlt:
-        "A spiral galaxy rendered in Braille dot-art: a bright amber nucleus wrapped by two sweeping spiral arms over a speckled disk, tilted away from the viewer.",
-      backToIndex: "back to index",
       readRender: "how this was rendered",
     },
     work: [
@@ -327,26 +312,19 @@ export const CONTENT: Record<Locale, Dictionary> = {
       writing: "textos",
       education: "formação",
       contact: "contato",
-      archive: "arquivo",
-      stack: "stack",
     },
     ui: {
       copyEmail: "copiar e-mail",
       copied: "copiado",
       allWriting: "todos os textos",
-      resume: "curriculo.pdf",
       present: "atual",
       halt: "parar",
       resume_playback: "retomar",
       theme: "alternar entre modo claro e escuro",
       lang: "english",
       skipToContent: "pular para o conteúdo",
-      commandHint: "tecle ⌘K",
       reducedMotionNote:
         "Movimento reduzido está ativo, então o campo abaixo é um único quadro pré-renderizado.",
-      galaxyAlt:
-        "Uma galáxia espiral renderizada em arte de pontos Braille: um núcleo âmbar brilhante envolvido por dois braços espirais sobre um disco pontilhado, inclinado em relação ao observador.",
-      backToIndex: "voltar ao início",
       readRender: "como isto foi renderizado",
     },
     work: [

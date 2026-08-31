@@ -15,7 +15,6 @@ type Props = {
   labels: {
     halt: string;
     resume: string;
-    alt: string;
     reducedMotionNote: string;
     copyEmail: string;
     copied: string;
@@ -45,12 +44,7 @@ export function Hero(props: Props) {
         centerX={narrow ? 0 : 0.92}
         centerY={narrow ? -0.78 : 0}
         scale={narrow ? 3.4 : 2.5}
-        labels={{
-          halt: props.labels.halt,
-          resume: props.labels.resume,
-          alt: props.labels.alt,
-          reducedMotionNote: props.labels.reducedMotionNote,
-        }}
+        labels={props.labels}
       />
 
       {/* A scrim only under the text column, so the left stays legible without
@@ -88,7 +82,7 @@ export function Hero(props: Props) {
               href={props.linkedin}
               target="_blank"
               rel="noreferrer"
-              className="border border-rule bg-bg px-3 py-1 text-chrome text-dim transition-colors hover:border-amber hover:text-amber"
+              className="key text-chrome"
             >
               linkedin
             </a>
@@ -96,7 +90,7 @@ export function Hero(props: Props) {
               href={props.github}
               target="_blank"
               rel="noreferrer"
-              className="border border-rule bg-bg px-3 py-1 text-chrome text-dim transition-colors hover:border-amber hover:text-amber"
+              className="key text-chrome"
             >
               github
             </a>

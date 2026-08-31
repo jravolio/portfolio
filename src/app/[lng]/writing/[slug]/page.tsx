@@ -3,7 +3,7 @@ import type { BlogPosting, WithContext } from "schema-dts";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getContent, LOCALES, SITE } from "@/data/resume";
-import { getPost, getSlugs } from "@/lib/blog";
+import { getPost, getSlugs, readPost } from "@/lib/blog";
 
 export async function generateStaticParams() {
   const slugs = await getSlugs();
@@ -16,17 +16,19 @@ export async function generateMetadata({
   params: Promise<{ lng: string; slug: string }>;
 }): Promise<Metadata> {
   const { lng, slug } = await params;
-  const post = await getPost(slug);
-  if (!post) return {};
+  // Frontmatter only. getPost would run the whole Shiki pipeline for a title.
+  const parsed = await readPost(slug);
+  if (!parsed) return {};
+  const meta = parsed.data as { title: string; summary: string; publishedAt: string };
   return {
-    title: post.metadata.title,
-    description: post.metadata.summary,
+    title: meta.title,
+    description: meta.summary,
     alternates: { canonical: `/${lng}/writing/${slug}` },
     openGraph: {
-      title: post.metadata.title,
-      description: post.metadata.summary,
+      title: meta.title,
+      description: meta.summary,
       type: "article",
-      publishedTime: post.metadata.publishedAt,
+      publishedTime: meta.publishedAt,
       url: `${SITE.url}/${lng}/writing/${slug}`,
     },
   };
@@ -59,7 +61,7 @@ export default async function PostPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
-      <Link href={`/${lng}/writing`} className="text-chrome text-dim hover:text-amber">
+      <Link href={`/${lng}/writing`} className="chrome-link text-chrome">
         ← {t.headings.writing}
       </Link>
       <h1 className="mt-6 text-display-2 text-ink-hi">{post.metadata.title}</h1>

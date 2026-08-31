@@ -29,7 +29,7 @@ export function CopyEmail({ email, labels }: { email: string; labels: { copy: st
           // nothing to recover from.
         }
       }}
-      className="group inline-flex items-center gap-2 border border-rule bg-bg px-3 py-1 text-chrome text-dim transition-colors duration-200 hover:border-amber hover:text-amber"
+      className="key group inline-flex items-center gap-2 text-chrome"
     >
       <span aria-hidden="true">{copied ? "[x]" : "[ ]"}</span>
       <span>{copied ? labels.copied : labels.copy}</span>

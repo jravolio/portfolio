@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getContent, SITE } from "@/data/resume";
+import { formatPeriod, getContent, SITE } from "@/data/resume";
 
 export async function generateMetadata({
   params,
@@ -49,7 +49,7 @@ export default async function WorkPage({ params }: { params: Promise<{ lng: stri
                   {role.via ? <span className="text-dim"> ({role.via})</span> : null}
                 </td>
                 <td data-numeric className="py-3 pr-6 text-chrome text-dim whitespace-nowrap">
-                  {role.start} — {role.end ?? t.ui.present}
+                  {formatPeriod(role.start, role.end, t.ui.present)}
                 </td>
                 <td className="py-3 text-chrome text-dim">{role.stack.join(" · ")}</td>
               </tr>
@@ -66,7 +66,7 @@ export default async function WorkPage({ params }: { params: Promise<{ lng: stri
               <span className="text-dim"> · {role.role}</span>
             </h2>
             <p data-numeric className="mt-1 text-chrome text-dim">
-              {role.start} — {role.end ?? t.ui.present} · {role.location}
+              {formatPeriod(role.start, role.end, t.ui.present)} · {role.location}
             </p>
             <p className="mt-3 max-w-[70ch] text-body">{role.lede}</p>
             <ul className="mt-4 max-w-[70ch] space-y-2">

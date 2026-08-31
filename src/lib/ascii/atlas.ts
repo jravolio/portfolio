@@ -4,7 +4,7 @@
  * The ramp is MEASURED, never hand-ordered. `@` covers 0.42 of its cell in one
  * monospace face and 0.58 in another; assuming an order is why naive ASCII
  * renders look muddy in the midtones. We rasterise every candidate once at
- * boot (~2ms), integrate its alpha, and sort by actual ink coverage.
+ * boot, integrate its alpha, and sort by actual ink coverage.
  */
 
 /**
@@ -19,7 +19,7 @@
 export const RAMP_POOL = [
   " ",
   ".",
-  "\u00b7",
+  "·",
   ":",
   "-",
   "=",
@@ -30,10 +30,10 @@ export const RAMP_POOL = [
   "%",
   "@",
   "#",
-  "\u2591", // light shade   0.418
-  "\u2580", // upper half    0.438
-  "\u2584", // lower half    0.506
-  "\u2592", // medium shade  0.746
+  "░", // light shade   0.418
+  "▀", // upper half    0.438
+  "▄", // lower half    0.506
+  "▒", // medium shade  0.746
 ] as const;
 
 /**
@@ -43,43 +43,43 @@ export const RAMP_POOL = [
  */
 export const EDGE_GLYPHS = ["_", "/", "|", "\\"] as const;
 
+/** Exactly what the renderer reads. Anything else was invented to satisfy the
+ *  type and had to be faked by whichever builder did not have it. */
 export type Atlas = {
   texture: HTMLCanvasElement;
-  /** total glyphs */
-  count: number;
-  /** glyphs per atlas row. 256 Braille cells in one row would be 3584px at
-   *  DPR 2; a 16x16 grid keeps it well inside every texture-size limit. */
+  /** glyphs per atlas row, and rows. 256 Braille cells in one row would be
+   *  3584px at DPR 2; a 16x16 grid keeps it inside every texture-size limit. */
   atlasCols: number;
   atlasRows: number;
-  /** how many of those are ramp glyphs (the rest are directional) */
+  /** how many glyphs the ramp addresses before the directional ones */
   rampCount: number;
-  cellW: number;
-  cellH: number;
-  coverage: number[];
-  chars: string[];
 };
 
 /**
  * True if the face actually contains the glyph. A substituted fallback renders
  * at the fallback's advance width, which silently breaks the 7px lattice, so a
  * missing glyph has to be dropped rather than measured.
+ *
+ * Compared on the 2D context rather than a DOM probe: appending a span and
+ * reading getBoundingClientRect forces a full synchronous layout, and this runs
+ * once per ramp candidate at hero mount.
  */
-function isSupported(fontFamily: string, ch: string): boolean {
+function isSupported(
+  ctx: CanvasRenderingContext2D,
+  fontFamily: string,
+  ch: string,
+): boolean {
   if (ch === " ") return true;
-  const probe = document.createElement("span");
-  probe.textContent = ch;
-  probe.style.cssText = "position:absolute;visibility:hidden;font-size:100px;white-space:pre";
-  probe.style.fontFamily = fontFamily;
-  document.body.appendChild(probe);
-  const withFace = probe.getBoundingClientRect().width;
-  probe.style.fontFamily = "monospace";
-  const withFallback = probe.getBoundingClientRect().width;
-  probe.remove();
+  // Large size so a sub-pixel advance difference cannot round the two together.
+  ctx.font = `200px ${fontFamily}`;
+  const withFace = ctx.measureText(ch).width;
+  ctx.font = "200px monospace";
+  const withFallback = ctx.measureText(ch).width;
   return Math.abs(withFace - withFallback) > 0.5;
 }
 
 function measureCoverage(
-  ctx: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D,
+  ctx: CanvasRenderingContext2D,
   ch: string,
   w: number,
   h: number,
@@ -111,33 +111,35 @@ export function buildAtlas(fontFamily: string, dpr: number): Atlas {
   probe.width = cellW;
   probe.height = cellH;
   const pctx = probe.getContext("2d", { willReadFrequently: true })!;
-  pctx.font = font;
   pctx.textAlign = "center";
   pctx.textBaseline = "middle";
 
-  const measured = RAMP_POOL.filter((ch) => isSupported(fontFamily, ch)).map((ch) => ({
+  const supported = RAMP_POOL.filter((ch) => isSupported(pctx, fontFamily, ch));
+  pctx.font = font;
+  const measured = supported.map((ch) => ({
     ch,
     cov: ch === " " ? 0 : measureCoverage(pctx, ch, cellW, cellH),
   }));
 
-  // Sort by real coverage, then drop any glyph whose coverage is within 1.5% of
+  // Sort by real coverage, then drop any glyph whose coverage is within 2.8% of
   // its predecessor: near-duplicates waste a ramp step and cause the midtones
   // to band.
   measured.sort((a, b) => a.cov - b.cov);
-  const ramp: { ch: string; cov: number }[] = [];
+  const ramp: string[] = [];
+  let prevCov = -1;
   for (const m of measured) {
-    const prev = ramp[ramp.length - 1];
-    if (!prev || m.cov - prev.cov > 0.028) ramp.push(m);
+    if (prevCov < 0 || m.cov - prevCov > 0.028) {
+      ramp.push(m.ch);
+      prevCov = m.cov;
+    }
   }
 
-  const chars = [...ramp.map((r) => r.ch), ...EDGE_GLYPHS];
-  const count = chars.length;
-  const atlasCols = count;
-  const atlasRows = 1;
+  const chars = [...ramp, ...EDGE_GLYPHS];
+  const atlasCols = chars.length;
 
   const canvas = document.createElement("canvas");
   canvas.width = cellW * atlasCols;
-  canvas.height = cellH * atlasRows;
+  canvas.height = cellH;
   const ctx = canvas.getContext("2d")!;
   ctx.font = font;
   ctx.textAlign = "center";
@@ -151,19 +153,8 @@ export function buildAtlas(fontFamily: string, dpr: number): Atlas {
     ctx.fillText(ch, i * cellW + cellW / 2, cellH / 2);
   });
 
-  return {
-    texture: canvas,
-    count,
-    atlasCols,
-    atlasRows,
-    rampCount: ramp.length,
-    cellW,
-    cellH,
-    coverage: ramp.map((r) => r.cov),
-    chars,
-  };
+  return { texture: canvas, atlasCols, atlasRows: 1, rampCount: ramp.length };
 }
-
 
 /**
  * Braille atlas: the full U+2800-28FF block, 256 patterns.
@@ -183,10 +174,6 @@ export function buildBrailleAtlas(fontFamily: string, dpr: number): Atlas {
   const cellW = 7 * scale;
   const cellH = 14 * scale;
 
-  if (!isSupported(fontFamily, "\u28FF")) {
-    throw new Error(`font "${fontFamily}" has no Braille patterns`);
-  }
-
   const atlasCols = 16;
   const atlasRows = 16;
 
@@ -198,45 +185,27 @@ export function buildBrailleAtlas(fontFamily: string, dpr: number): Atlas {
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#fff";
 
-  // Commit Mono is not a pixel font, so a fractional size is fine here. Pick
-  // the size whose full-block glyph best fills the cell without clipping.
-  const probe = document.createElement("canvas");
-  probe.width = cellW;
-  probe.height = cellH;
-  const pctx = probe.getContext("2d", { willReadFrequently: true })!;
-  pctx.textAlign = "center";
-  pctx.textBaseline = "middle";
-  let best = 12 * scale;
-  let bestCov = 0;
-  for (let px = 10 * scale; px <= 20 * scale; px += scale * 0.5) {
-    pctx.font = `${px}px ${fontFamily}`;
-    const cov = measureCoverage(pctx, "\u28FF", cellW, cellH);
-    if (cov > bestCov) {
-      bestCov = cov;
-      best = px;
-    }
+  if (!isSupported(ctx, fontFamily, "⣿")) {
+    throw new Error(`font "${fontFamily}" has no Braille patterns`);
   }
-  ctx.font = `${best}px ${fontFamily}`;
+
+  // Commit Mono is not a pixel font, so a fractional size is fine here. Size the
+  // full-block pattern's ink box to the cell in one measurement, rather than
+  // sweeping sizes and integrating alpha at each: getImageData is a canvas flush
+  // plus a pass over every byte, and this used to do 21 of them at mount.
+  const REF = 100 * scale;
+  ctx.font = `${REF}px ${fontFamily}`;
+  const m = ctx.measureText("⣿");
+  const inkW = m.actualBoundingBoxLeft + m.actualBoundingBoxRight;
+  const inkH = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
+  const fit = Math.min(cellW / inkW, cellH / inkH) * REF * 0.98;
+  ctx.font = `${fit}px ${fontFamily}`;
 
   for (let i = 0; i < 256; i++) {
     const col = i % atlasCols;
     const row = Math.floor(i / atlasCols);
-    ctx.fillText(
-      String.fromCharCode(0x2800 + i),
-      col * cellW + cellW / 2,
-      row * cellH + cellH / 2,
-    );
+    ctx.fillText(String.fromCharCode(0x2800 + i), col * cellW + cellW / 2, row * cellH + cellH / 2);
   }
 
-  return {
-    texture: canvas,
-    count: 256,
-    atlasCols,
-    atlasRows,
-    rampCount: 256,
-    cellW,
-    cellH,
-    coverage: [],
-    chars: [],
-  };
+  return { texture: canvas, atlasCols, atlasRows, rampCount: 256 };
 }

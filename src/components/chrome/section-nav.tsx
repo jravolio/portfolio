@@ -2,8 +2,17 @@
 
 import { useEffect, useState } from "react";
 import LineSidebar from "@/components/vendor/LineSidebar";
+import { useThemeColors } from "@/hooks/use-theme-colors";
+import { toHex } from "@/lib/color";
 
 type Section = { id: string; label: string };
+
+// Module constant: this is useThemeColors' effect dependency.
+const TOKENS = {
+  accent: ["--amber", "#985704"],
+  text: ["--dim", "#6F6151"],
+  marker: ["--rule", "#D1CCBB"],
+} as const;
 
 /**
  * Fixed section index down the left margin. LineSidebar's cursor-proximity
@@ -17,34 +26,7 @@ type Section = { id: string; label: string };
 export function SectionNav({ sections }: { sections: Section[] }) {
   const [active, setActive] = useState(0);
   const [visible, setVisible] = useState(false);
-  const [colors, setColors] = useState({ accent: "#985704", text: "#6F6151", marker: "#D1CCBB" });
-
-  useEffect(() => {
-    const read = () => {
-      const cs = getComputedStyle(document.documentElement);
-      const resolve = (v: string, fallback: string) => {
-        const raw = cs.getPropertyValue(v).trim();
-        if (!raw) return fallback;
-        const c = document.createElement("canvas");
-        c.width = c.height = 1;
-        const ctx = c.getContext("2d")!;
-        ctx.fillStyle = "#000";
-        ctx.fillStyle = raw;
-        ctx.fillRect(0, 0, 1, 1);
-        const d = ctx.getImageData(0, 0, 1, 1).data;
-        return `#${[d[0], d[1], d[2]].map((n) => (n ?? 0).toString(16).padStart(2, "0")).join("")}`;
-      };
-      setColors({
-        accent: resolve("--amber", "#985704"),
-        text: resolve("--dim", "#6F6151"),
-        marker: resolve("--rule", "#D1CCBB"),
-      });
-    };
-    read();
-    const mo = new MutationObserver(read);
-    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-    return () => mo.disconnect();
-  }, []);
+  const colors = useThemeColors(TOKENS);
 
   useEffect(() => {
     const hero = document.getElementById("top");
@@ -89,9 +71,9 @@ export function SectionNav({ sections }: { sections: Section[] }) {
         markerLength={28}
         itemGap={14}
         fontSize={0.7}
-        accentColor={colors.accent}
-        textColor={colors.text}
-        markerColor={colors.marker}
+        accentColor={toHex(colors.accent)}
+        textColor={toHex(colors.text)}
+        markerColor={toHex(colors.marker)}
         onItemClick={(i) => {
           const s = sections[i];
           if (s) document.getElementById(s.id)?.scrollIntoView({ behavior: "smooth" });

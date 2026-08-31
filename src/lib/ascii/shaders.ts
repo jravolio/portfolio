@@ -1,3 +1,16 @@
+import {
+  ARMS,
+  CELL_ASPECT,
+  DE_VAUC,
+  PITCH,
+  R_BULGE,
+  R_DISK,
+} from "./field-constants.mjs";
+
+/** GLSL ES 3.00 has no implicit int->float conversion, so `2` cannot initialise
+ *  a `const float`. Every interpolated constant goes through this. */
+const f = (n: number) => (Number.isInteger(n) ? `${n}.0` : `${n}`);
+
 export const VERT = /* glsl */ `#version 300 es
 precision highp float;
 const vec2 P[3] = vec2[3](vec2(-1.0,-1.0), vec2(3.0,-1.0), vec2(-1.0,3.0));
@@ -17,12 +30,14 @@ void main() { gl_Position = vec4(P[gl_VertexID], 0.0, 1.0); }
    coil themselves out of existence within a couple of galactic years.
    Rotating the pattern rigidly is both the physics and the only thing that
    looks stable over a long-running loop.
+
+   Structural constants are interpolated from field-constants.mjs, which the
+   CPU bake imports too.
    ========================================================================== */
 export const FIELD_FRAG = /* glsl */ `#version 300 es
 precision highp float;
 
 uniform vec2  uField;        // supersampled field resolution
-uniform float uCellAspect;   // MEASURED advance/lineHeight. 0.5 for Departure Mono.
 uniform float uGridAspect;   // cols/rows
 uniform float uScale;        // disk scale lengths per half-grid-height
 uniform float uIncl;         // inclination; 0 = face on
@@ -31,16 +46,12 @@ uniform vec2  uCenter;
 
 out vec4 fragColor;
 
-const float TAU = 6.28318530718;
-
-// Sa-Sc galaxies average a pitch angle at or under 15.5 degrees, opening up
-// toward later Hubble types. 19 degrees sits in Sc territory: tighter than this
-// and the arms fall below the glyph resolution and read as concentric rings.
-const float PITCH = 0.331;          // radians, ~19 degrees
-const float ARMS  = 2.0;            // m=2, a grand-design spiral
-const float R_DISK = 1.0;           // exponential disk scale length
-const float R_BULGE = 0.14;         // Sersic effective radius
-const float DE_VAUC = 7.669;        // Sersic n=4 normalisation
+const float CELL_ASPECT = ${f(CELL_ASPECT)};
+const float PITCH   = ${f(PITCH)};
+const float ARMS    = ${f(ARMS)};
+const float R_DISK  = ${f(R_DISK)};
+const float R_BULGE = ${f(R_BULGE)};
+const float DE_VAUC = ${f(DE_VAUC)};
 
 float hash(vec2 p) {
   return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -61,7 +72,7 @@ void main() {
   vec2 c = (gl_FragCoord.xy / uField) * 2.0 - 1.0;
   // Cell space -> aspect-corrected screen. Skip this and a face-on galaxy
   // renders as an ellipse purely from the 2:1 character cell.
-  c.x *= uGridAspect * uCellAspect;
+  c.x *= uGridAspect * CELL_ASPECT;
   vec2 p = (c - uCenter) * uScale;
 
   // De-project: the disk is a circle in its own plane, squashed on screen by
@@ -101,7 +112,13 @@ void main() {
   float orbit = th - uTime * 0.5 / max(r, 0.22);
   vec2 tex = vec2(cos(orbit), sin(orbit)) * r;
   float clumps = fbm(tex * 3.4 + 11.0);
-  float hii = smoothstep(0.62, 0.95, fbm(tex * 7.0 + 3.0)) * arm;
+
+  // HII regions exist only inside the arms. Guarding the fbm on arm > 0 skips
+  // 12 transcendentals over the half of the domain where the result is
+  // multiplied by zero; the arms are broad screen-coherent bands, so the
+  // divergence cost is far below what the skip saves.
+  float hii = 0.0;
+  if (arm > 0.0) hii = smoothstep(0.62, 0.95, fbm(tex * 7.0 + 3.0)) * arm;
 
   float L = bulge * 0.7
           + disk * (0.25 + 1.9 * arm) * (0.5 + 1.0 * clumps)
@@ -130,6 +147,9 @@ void main() {
    Box-downsamples the supersampled field to the cell grid, runs a Sobel in
    CELL space to pick directional glyphs, applies ordered dither to the ramp
    index, and holds the previous frame's index for temporal hysteresis.
+
+   Braille takes a separate path: at 2x4 sub-cells every dot maps to exactly
+   one field texel, so it thresholds rather than downsamples.
    ========================================================================== */
 export const QUANT_FRAG = /* glsl */ `#version 300 es
 precision highp float;
@@ -137,9 +157,8 @@ precision highp float;
 uniform sampler2D uField;
 uniform sampler2D uPrev;
 uniform vec2  uGrid;        // cols, rows
-uniform float uSS;          // supersample factor
+uniform float uSS;          // supersample factor (ramp path only)
 uniform float uRampCount;
-uniform float uCellAspect;
 uniform float uEdgeThresh;
 uniform float uHysteresis;
 uniform float uFirstFrame;
@@ -148,6 +167,8 @@ uniform float uGamma;
 uniform float uBraille;   // 1 = 2x4 sub-cell mode
 
 out vec4 fragColor;
+
+const float CELL_ASPECT = ${f(CELL_ASPECT)};
 
 // 4x4 Bayer. Deterministic in screen space so it does not shimmer under motion.
 const float BAYER[16] = float[16](
@@ -159,6 +180,10 @@ const float BAYER[16] = float[16](
 
 // Box-average one cell out of the supersampled field. Sampling a single texel
 // (the naive floor(uv*grid)/grid) aliases and crawls on animated content.
+//
+// Ramp path only: uSS is the per-axis supersample factor, and the Braille field
+// target is 2x4 rather than square, so this would average the wrong sub-rows
+// there. brailleCell() carries its own accent accumulation instead.
 vec4 cell(vec2 id) {
   vec4 acc = vec4(0.0);
   float n = 0.0;
@@ -188,19 +213,24 @@ float ign(vec2 p) {
  * One Braille cell. The field is rendered at 2x horizontally and 4x vertically
  * so every dot maps to exactly one field texel - no averaging, no guessing.
  *
+ * Returns the pattern byte in .x and the cell's mean accent in .y, both from
+ * the same eight taps.
+ *
  * Unicode's dot numbering is not raster order:
  *   dot1 (0,0)=0x01  dot4 (1,0)=0x08
  *   dot2 (0,1)=0x02  dot5 (1,1)=0x10
  *   dot3 (0,2)=0x04  dot6 (1,2)=0x20
  *   dot7 (0,3)=0x40  dot8 (1,3)=0x80
  */
-float brailleCell(vec2 id, float black, float gamma) {
+vec2 brailleCell(vec2 id, float black, float gamma) {
   float bits = 0.0;
+  float accent = 0.0;
   for (int sx = 0; sx < 2; sx++) {
     for (int sy = 0; sy < 4; sy++) {
       // gl_FragCoord is bottom-up; Braille rows read top-down.
       vec2 sub = vec2(id.x * 2.0 + float(sx), id.y * 4.0 + float(3 - sy));
       vec4 f = texture(uField, (sub + 0.5) / (uGrid * vec2(2.0, 4.0)));
+      accent += f.g;
 
       float L = pow(clamp((f.r - black) / (1.0 - black), 0.0, 1.0), gamma);
       if (L > ign(sub)) {
@@ -208,15 +238,15 @@ float brailleCell(vec2 id, float black, float gamma) {
       }
     }
   }
-  return bits;
+  return vec2(bits, accent / 8.0);
 }
 
 void main() {
   vec2 id = floor(gl_FragCoord.xy);
 
   if (uBraille > 0.5) {
-    vec4 c = cell(id);
-    fragColor = vec4(brailleCell(id, uBlack, uGamma) / 255.0, c.g, 0.0, 1.0);
+    vec2 b = brailleCell(id, uBlack, uGamma);
+    fragColor = vec4(b.x / 255.0, b.y, 0.0, 1.0);
     return;
   }
 
@@ -238,16 +268,14 @@ void main() {
   // gradient has to be rescaled into cell space before the atan or every
   // directional glyph points the wrong way.
   vec2 e = vec2(-gy, gx);
-  e.y *= (1.0 / uCellAspect);
+  e.y *= (1.0 / CELL_ASPECT);
   float ang = mod(atan(e.y, e.x), 3.14159265);
   float bin = mod(floor(ang / 3.14159265 * 4.0 + 0.5), 4.0);
 
   // --- ramp index ---------------------------------------------------------
   float N = uRampCount;
-  // Black point, then a mild gamma. The photographic 1/2.2 curve LIFTS darks,
-  // which on a bright-object-against-empty-sky image smears the disk's faint
-  // outer halo into fog across the entire frame. Subtracting a floor first is
-  // what gives back real empty sky.
+  // Black point, then a mild gamma. See TONE in field-constants.mjs for why the
+  // floor comes first.
   float lp = pow(clamp((L - uBlack) / (1.0 - uBlack), 0.0, 1.0), uGamma);
 
   // Ordered dither on the INDEX. Buys ~2 perceived levels on smooth gradients
@@ -288,8 +316,8 @@ uniform sampler2D uAtlas;
 uniform vec2  uGrid;
 uniform vec2  uResolution;
 uniform vec2  uAtlasGrid;   // glyphs per row, rows
-uniform vec3  uInk;      // disk / structure
-uniform vec3  uAccent;   // photon ring + headline
+uniform vec3  uInk;         // disk / structure
+uniform vec3  uAccent;      // bulge / HII regions
 uniform float uOpacity;
 
 out vec4 fragColor;
@@ -308,7 +336,7 @@ void main() {
   vec2 auv = (slot + vec2(f.x, 1.0 - f.y)) / uAtlasGrid;
   float ink = texture(uAtlas, auv).a;
 
-  vec3 col = mix(uInk, uAccent, clamp(c.g + c.b * 0.9, 0.0, 1.0));
+  vec3 col = mix(uInk, uAccent, clamp(c.g, 0.0, 1.0));
   fragColor = vec4(col, ink * uOpacity);
 }
 `;

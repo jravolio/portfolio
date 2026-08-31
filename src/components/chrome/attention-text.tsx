@@ -2,6 +2,7 @@
 
 import DecryptedText from "@/components/vendor/DecryptedText";
 import { RAMP_POOL } from "@/lib/ascii/atlas";
+import { cn } from "@/lib/utils";
 
 /**
  * The one heading on the page allowed to draw attention to itself.
@@ -31,7 +32,7 @@ export function AttentionText({
   className?: string;
 }) {
   return (
-    <Tag className={`text-display-3 text-ink-hi ${className}`}>
+    <Tag className={cn("text-display-3 text-ink-hi", className)}>
       <DecryptedText
         text={text}
         animateOn="view"
