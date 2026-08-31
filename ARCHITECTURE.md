@@ -105,6 +105,15 @@ allocated at `cols*2 x rows*4` so every Braille dot maps to exactly one field te
   256, so the Braille atlas is built from Commit Mono and `buildBrailleAtlas` throws rather than
   let a fallback face render at the wrong advance width.
 - The atlas is a 16x16 grid, not one row: 256 cells in a row would be 3584px at DPR 2.
+- **The photon ring bypasses the dither entirely.** It is analytic and one dot wide, so
+  thresholding it like everything else shatters it into speckle: it is the thinnest feature in
+  the frame and the dither has nothing to trade against. Forced on where `ringCov > 0.45`, it
+  stays unbroken at every grid size.
+- Ring width is sized to the **dot** grid (`rows * 4`), not the cell grid. A cell-sized ring is
+  four times thicker than the feature it is meant to draw.
+- The ring's brightness has its own floor, `ring * (0.85 + 0.5 * diskL)`. The earlier
+  `(0.35 + 0.65 * diskL)` throttled it to a third exactly where the disk behind it is dark,
+  which is precisely where it is drawing the silhouette.
 - The per-dot threshold is **interleaved gradient noise**, not Bayer. An 8x8 Bayer matrix aligns
   with the 2x4 cell structure and produces a visible four-column repeat. IGN has no periodic
   structure and is still position-only, so it does not shimmer.

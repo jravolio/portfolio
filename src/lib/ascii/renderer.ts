@@ -237,7 +237,11 @@ let raf = 0;
     // would move at different speeds on 60Hz and 120Hz displays.
     time += dt;
 
-    const ringW = Math.max(0.45 * ((2 * scale) / rows), 0.05);
+    // Sized to one row of the sampling grid, not one cell: in Braille the
+    // vertical resolution is 4x finer, so a cell-sized ring is four times
+    // thicker than the feature it is meant to draw.
+    const ringRows = mode === "braille" ? rows * 4 : rows;
+    const ringW = Math.max(1.0 * ((2 * scale) / ringRows), 0.02);
 
     // --- pass 1: the field
     gl.bindFramebuffer(gl.FRAMEBUFFER, field.fbo);

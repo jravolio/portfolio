@@ -244,7 +244,7 @@ function ign(x, y) {
 }
 
 export function renderBraille(cols, rows, time = 0) {
-  RING_W = Math.max(Number(process.env.BH_RINGW ?? 0.45) * ((2 * SCALE) / rows), 0.05);
+  RING_W = Math.max(Number(process.env.BH_RINGW ?? 1.0) * ((2 * SCALE) / (rows * 4)), 0.02);
   const black = Number(process.env.BH_BLACK ?? 0.18);
   const gam = Number(process.env.BH_GAMMA ?? 1.05);
   const out = [];
@@ -263,9 +263,15 @@ export function renderBraille(cols, rows, time = 0) {
           const cy = 1 - fy * 2;
           cx *= (cols / rows) * CELL_ASPECT;
           const t = trace(cx * SCALE, cy * SCALE, time);
-          const lit = Math.min(t.L + t.ringCov * 1.1 * (0.35 + 0.65 * t.L), 1);
-          const norm = Math.min(Math.max((lit - black) / (1 - black), 0), 1);
-          if (Math.pow(norm, gam) > ign(dx, dy)) {
+          // The ring is analytic and one dot wide; passing it through the
+          // dither shatters it into speckle, so it is forced on instead.
+          let on = t.ringCov > 0.45;
+          if (!on) {
+            const lit = Math.min(t.L + t.ringCov * (0.85 + 0.5 * t.L), 1);
+            const norm = Math.min(Math.max((lit - black) / (1 - black), 0), 1);
+            on = Math.pow(norm, gam) > ign(dx, dy);
+          }
+          if (on) {
             bits |= sy < 3 ? 1 << (sy + 3 * sx) : 0x40 << sx;
           }
         }
@@ -316,7 +322,7 @@ export function render(cols, rows, time = 0, supersample = 2) {
       // The photon ring is light from the disk wrapped a full turn, so it is
       // brightest where the disk behind it is brightest. Adding it to the field
       // keeps that modulation; stamping it as a constant would draw a circle.
-      const lit = Math.min(L + ring * RING_GAIN * (0.35 + 0.65 * L), 1);
+      const lit = Math.min(L + ring * RING_GAIN * (0.85 + 0.5 * L), 1);
 
       // Black point, then a mild gamma. The photographic 1/2.2 curve LIFTS
       // darks, which on a bright-object-against-empty-sky image smears the

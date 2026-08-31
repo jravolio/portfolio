@@ -263,9 +263,25 @@ float brailleCell(vec2 id, float black, float gamma) {
       // gl_FragCoord is bottom-up; Braille rows read top-down.
       vec2 sub = vec2(id.x * 2.0 + float(sx), id.y * 4.0 + float(3 - sy));
       vec4 f = texture(uField, (sub + 0.5) / (uGrid * vec2(2.0, 4.0)));
-      float L = clamp(max(f.r, f.b) + f.g * 1.1 * (0.35 + 0.65 * f.r), 0.0, 1.0);
-      L = pow(clamp((L - black) / (1.0 - black), 0.0, 1.0), gamma);
-      if (L > ign(sub)) {
+
+      float disk = f.r;
+      float ring = f.g;
+      float name = f.b;
+
+      // The photon ring is analytic, so it must NOT go through the dither.
+      // Thresholding it like everything else shatters a one-dot-wide feature
+      // into speckle - it is the thinnest thing in the frame and the dither
+      // has nothing to trade against. Forced on, it stays unbroken at every
+      // grid size, and at 2x4 dots per cell it is finer than the ramp's ring.
+      bool lit = ring > 0.45;
+
+      if (!lit) {
+        float L = clamp(max(disk, name) + ring * (0.85 + 0.5 * disk), 0.0, 1.0);
+        L = pow(clamp((L - black) / (1.0 - black), 0.0, 1.0), gamma);
+        lit = L > ign(sub);
+      }
+
+      if (lit) {
         bits += (sy < 3) ? exp2(float(sy + 3 * sx)) : exp2(float(6 + sx));
       }
     }
@@ -296,7 +312,10 @@ void main() {
   // The photon ring is disk light wrapped a full turn, so it is brightest where
   // the disk behind it is brightest. Adding it preserves that modulation;
   // stamping a constant would draw a geometric circle.
-  float L = clamp(diskL + nameL * (1.0 - diskL) + ring * 1.1 * (0.35 + 0.65 * diskL), 0.0, 1.0);
+  // The ring is what draws the silhouette, and it matters MOST where the disk
+  // behind it is dark - which is exactly where the old (0.35 + 0.65*diskL)
+  // term throttled it to a third strength. Give it a floor of its own.
+  float L = clamp(diskL + nameL * (1.0 - diskL) + ring * (0.85 + 0.5 * diskL), 0.0, 1.0);
 
   // --- Sobel in cell space ------------------------------------------------
   float tl = lum(id + vec2(-1.0,  1.0)), tc = lum(id + vec2(0.0,  1.0)), tr = lum(id + vec2(1.0,  1.0));
