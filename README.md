@@ -1,43 +1,27 @@
-# Portfolio [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fdillionverma%2Fportfolio)
+# devjravolio.com
 
-Built with next.js, [shadcn/ui](https://ui.shadcn.com/), and [magic ui](https://magicui.design/), deployed on Vercel.
+Personal site for Julio Cesar Avolio. A text-mode portfolio: everything resolves to a
+7×14px character lattice, and the hero is a spiral galaxy computed in a WebGL2 fragment
+shader and rasterised into Braille sub-cells.
 
-# Features
+The `/render` page explains how it works and credits the prior art.
 
-- Setup only takes a few minutes by editing the [single config file](./src/data/resume.tsx)
-- Built using Next.js 14, React, Typescript, Shadcn/UI, TailwindCSS, Framer Motion, Magic UI
-- Includes a blog
-- Responsive for different devices
-- Optimized for Next.js and Vercel
+```bash
+pnpm install
+pnpm dev
+```
 
-# Getting Started Locally
+| | |
+|---|---|
+| `pnpm dev` | dev server |
+| `pnpm build` | bake the fallback frame, then build |
+| `pnpm bake` | regenerate `public/static/galaxy.txt` |
+| `pnpm lint` / `pnpm typecheck` | verification |
 
-1. Clone this repository to your local machine:
+- [ARCHITECTURE.md](ARCHITECTURE.md) — stack, renderer, layout, gotchas
+- [DESIGN.md](DESIGN.md) — tokens, type, lattice, bans
+- [PRODUCT.md](PRODUCT.md) — audience, voice, anti-references
 
-   ```bash
-   git clone https://github.com/dillionverma/portfolio
-   ```
-
-2. Move to the cloned directory
-
-   ```bash
-   cd portfolio
-   ```
-
-3. Install dependencies:
-
-   ```bash
-   pnpm install
-   ```
-
-4. Start the local Server:
-
-   ```bash
-   pnpm dev
-   ```
-
-5. Open the [Config file](./src/data/resume.tsx) and make changes
-
-# License
-
-Licensed under the [MIT license](https://github.com/dillionverma/portfolio/blob/main/LICENSE.md).
+Fonts are self-hosted and SIL OFL: [Departure Mono](https://departuremono.com) by Helena
+Zhang, and [Commit Mono](https://commitmono.com) by Eigil Nikolajsen. Licences ship in
+`public/static/fonts/`.

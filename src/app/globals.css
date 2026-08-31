@@ -1,144 +1,428 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ==========================================================================
+   TOKENS
+
+   Two output devices, one document.
+
+   LIGHT is the default: continuous-feed dot-matrix paper. Ink on stock,
+   subtractive, does not glow.
+   DARK is the instrument: amber phosphor emission over cool CRT glass. The
+   warm/cool opposition is what makes amber read as glowing rather than
+   merely orange.
+
+   Every text token below was verified against its own background: all pass
+   WCAG AA (>=4.5:1) and all resolve inside the sRGB gamut.
+   ========================================================================== */
+
+:root {
+  /* --- paper ------------------------------------------------------------ */
+  --bg: oklch(97.5% 0.018 95); /* #FAF7EA  stock            */
+  --bg-inset: oklch(94.5% 0.022 95); /* #F1EDDD  1.09            */
+  --rule: oklch(84.5% 0.024 95); /* #D1CCBB  1.49            */
+  --dim: oklch(50% 0.03 70); /* #6F6151   5.62:1         */
+  --text: oklch(25% 0.03 70); /* #2B1F11  14.96:1  ribbon */
+  --ink-hi: oklch(17% 0.028 70); /* #170D03  17.85:1         */
+  --amber: oklch(52% 0.118 62); /* #985704   5.31:1  ribbon 2 */
+  --cyan: oklch(48% 0.086 220); /* #05687F   5.91:1  links  */
+  --hot: oklch(50% 0.17 27); /* #B02B27   6.10:1  errata */
+
+  /* Paper does not glow. Refusing the bloom is the discipline that sells it. */
+  --glow: 0 0 0 transparent;
+  --grille-opacity: 0;
+
+  /* --- the lattice ------------------------------------------------------ */
+  /* Departure Mono: unitsPerEm 550, advance 350. At 11px that is exactly
+     7.000px advance and a 14.000px line box. Aspect exactly 0.5. Measured,
+     not assumed. Every dimension on this site is a multiple of these. */
+  --cell-w: 7px;
+  --cell-h: 14px;
+  --cell-aspect: 0.5;
+
+  --radius: 0px;
+}
+
+.dark {
+  --bg: oklch(18% 0.012 200); /* #0B1314  cold unlit phosphor */
+  --bg-inset: oklch(23.5% 0.014 200); /* #162021  1.13            */
+  --rule: oklch(30% 0.014 200); /* #263031  1.38            */
+  --dim: oklch(62% 0.03 85); /* #8E8572   5.15:1         */
+  --text: oklch(88% 0.045 85); /* #E5D6B6  13.06:1         */
+  --ink-hi: oklch(96% 0.03 85); /*          bright emission */
+  --amber: oklch(84% 0.17 84); /* #FEBF12  11.34:1  P3 phosphor box */
+  --cyan: oklch(84% 0.11 200); /* #65E0E7  11.96:1  IBM 5153 c11   */
+  --hot: oklch(64% 0.17 25); /* #E15955   5.15:1  IBM 5153 c12   */
+
+  --glow: 0 0 12px color-mix(in oklch, var(--amber) 22%, transparent);
+  --grille-opacity: 0.055;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-inset: var(--bg-inset);
+  --color-rule: var(--rule);
+  --color-dim: var(--dim);
+  --color-text: var(--text);
+  --color-ink-hi: var(--ink-hi);
+  --color-amber: var(--amber);
+  --color-cyan: var(--cyan);
+  --color-hot: var(--hot);
+
+  /* shadcn primitives mapped onto the two-device palette so its components
+     inherit the grid instead of importing a second, softer design system. */
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
+  --color-card: var(--bg-inset);
+  --color-card-foreground: var(--text);
+  --color-popover: var(--bg-inset);
+  --color-popover-foreground: var(--text);
+  --color-primary: var(--amber);
+  --color-primary-foreground: var(--bg);
+  --color-secondary: var(--bg-inset);
+  --color-secondary-foreground: var(--text);
+  --color-muted: var(--bg-inset);
+  --color-muted-foreground: var(--dim);
+  --color-accent: var(--bg-inset);
+  --color-accent-foreground: var(--amber);
+  --color-destructive: var(--hot);
+  --color-destructive-foreground: var(--bg);
+  --color-border: var(--rule);
+  --color-input: var(--rule);
+  --color-ring: var(--amber);
+
+  --font-departure: var(--font-departure), ui-monospace, monospace;
+  --font-commit: var(--font-commit), ui-monospace, monospace;
+
+  /* Spacing is one cell column. p-2 = 14px = one cell row. Nothing on this
+     site is spaced on Tailwind's 4px scale; that would break the lattice. */
+  --spacing: 7px;
+
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+
+  /* Departure Mono renders correctly only at integer multiples of 11px.
+     Fractional sizes turn a pixel font into mush and every reason to use
+     it evaporates. Line heights stay on the 14px lattice. */
+  --text-chrome: 11px;
+  --text-chrome--line-height: 14px;
+  --text-display-1: 22px;
+  --text-display-1--line-height: 28px;
+  --text-display-2: 33px;
+  --text-display-2--line-height: 42px;
+  --text-display-3: 44px;
+  --text-display-3--line-height: 56px;
+  --text-display-4: 66px;
+  --text-display-4--line-height: 70px;
+
+  /* Commit Mono for reading. 16/28 keeps prose on the same lattice. */
+  --text-body: 16px;
+  --text-body--line-height: 28px;
+  --text-small: 14px;
+  --text-small--line-height: 28px;
+
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-marquee: marquee var(--duration) infinite linear;
+  --animate-marquee-vertical: marquee-vertical var(--duration) linear infinite;
+  @keyframes marquee {
+  from {
+    transform: translateX(0);
+    }
+  to {
+    transform: translateX(calc(-100% - var(--gap)));
+    }
+  }
+  @keyframes marquee-vertical {
+  from {
+    transform: translateY(0);
+    }
+  to {
+    transform: translateY(calc(-100% - var(--gap)));
+    }
+  }
+}
+
+/* ==========================================================================
+   BASE
+   ========================================================================== */
 
 @layer base {
-    :root {
-      --background: 0 0% 100%;
-      --foreground: 210 11.1% 3.53%;
-
-      --card: 0 0% 100%;
-      --card-foreground: 210 11.1% 3.53%;
-
-      --popover: 0 0% 100%;
-      --popover-foreground: 210 11.1% 3.53%;
-
-      --primary: 0 0% 9%;
-      --primary-foreground: 0 0% 98%;
-
-      --secondary: 0 0% 96.1%;
-      --secondary-foreground: 0 0% 9%;
-
-      --muted: 0 0% 96.1%;
-      --muted-foreground: 0 0% 45.1%;
-
-      --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-
-      --destructive: 0 84.2% 60.2%;
-      --destructive-foreground: 0 0% 98%;
-
-      --border: 0 0% 89.8%;
-      --input: 0 0% 89.8%;
-      --ring: 0 0% 3.9%;
-
-      --radius: 0.5rem;
-    }
-
-    .dark {
-      --background: 210 11.1% 3.53%;
-      --foreground: 0 0% 98%;
-
-      --card: 210 11.1% 3.53%;
-      --card-foreground: 0 0% 98%;
-
-      --popover: 210 11.1% 3.53%;
-      --popover-foreground: 0 0% 98%;
-
-      --primary: 0 0% 98%;
-      --primary-foreground: 0 0% 9%;
-
-      --secondary: 0 0% 14.9%;
-      --secondary-foreground: 0 0% 98%;
-
-      --muted: 0 0% 14.9%;
-      --muted-foreground: 0 0% 63.9%;
-
-      --accent: 0 0% 14.9%;
-      --accent-foreground: 0 0% 98%;
-
-      --destructive: 0 62.8% 30.6%;
-      --destructive-foreground: 0 0% 98%;
-
-      --border: 0 0% 14.9%;
-      --input: 0 0% 14.9%;
-      --ring: 0 0% 83.1%;
-    }
+  * {
+    border-color: var(--rule);
+    min-width: 0;
   }
 
-  @layer base {
-    * {
-      @apply border-border;
-    }
-    body {
-      @apply bg-background text-foreground;
-    }
+  html {
+    color-scheme: light;
+    /* The full-bleed hero uses 100vw; without this a vertical scrollbar makes
+       100vw wider than the viewport and produces a horizontal scrollbar. */
+    overflow-x: hidden;
+    /* Anchors land on the lattice, clear of the sticky status bar. */
+    scroll-padding-top: calc(var(--cell-h) * 6);
+    -webkit-text-size-adjust: 100%;
   }
 
-  h3 code {
-    @apply !text-lg md:!text-xl;
-  }
-  
-  pre {
-    @apply !px-0 rounded-lg overflow-x-auto py-4
-  }
-   
-  pre [data-line] {
-    @apply px-4
+  html.dark {
+    color-scheme: dark;
   }
 
-  code {
-    @apply text-sm md:text-base !leading-loose;
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-commit);
+    font-size: 16px;
+    line-height: 28px;
+    font-variant-ligatures: none;
+    text-rendering: optimizeLegibility;
   }
-  
-  pre > code {
-    counter-reset: line;
+
+  /* Departure Mono is a pixel font. Antialiasing it is the single fastest way
+     to destroy it: the whole point is hard 1px edges on a 50-unit grid. */
+  .font-departure,
+  [class*="text-chrome"],
+  [class*="text-display"] {
+    font-family: var(--font-departure);
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: unset;
+    font-smooth: never;
+    letter-spacing: 0;
   }
-  
-  code[data-theme*=" "],
-  code[data-theme*=" "] span {
-    color: var(--shiki-light);
-    background-color: var(--shiki-light-bg);
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-departure);
+    -webkit-font-smoothing: none;
+    font-weight: 400;
+    text-wrap: balance;
   }
-   
-  @media (prefers-color-scheme: dark) {
-    code[data-theme*=" "],
-    code[data-theme*=" "] span {
-      color: var(--shiki-dark);
-      background-color: var(--shiki-dark-bg);
-    }
+
+  p {
+    text-wrap: pretty;
   }
-  
-  code[data-line-numbers] {
-    counter-reset: line;
+
+  ::selection {
+    background: var(--amber);
+    color: var(--bg);
+    text-shadow: none;
   }
-  
-  code[data-line-numbers] > [data-line]::before {
-    counter-increment: line;
-    content: counter(line);
-    @apply inline-block w-4 mr-4 text-right text-gray-500;
+
+  :focus-visible {
+    outline: 2px solid var(--amber);
+    outline-offset: 2px;
   }
- 
-  code {
-    counter-reset: line;
+
+  /* No rounded scrollbar. This is a terminal. */
+  ::-webkit-scrollbar {
+    width: var(--cell-w);
+    height: var(--cell-w);
   }
- 
-  code > [data-line]::before {
-  counter-increment: line;
-  content: counter(line);
- 
-  /* Other styling */
-  display: inline-block;
-  width: 1rem;
-  margin-right: 2rem;
-  text-align: right;
-  color: gray;
+  ::-webkit-scrollbar-track {
+    background: var(--bg-inset);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--rule);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--dim);
+  }
+
+  a {
+    color: inherit;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+
+  /* tabular by default: every number on this site sits in a column */
+  :where(td, th, time, [data-numeric]) {
+    font-variant-numeric: tabular-nums;
+  }
 }
- 
-code[data-line-numbers-max-digits="2"] > [data-line]::before {
-  width: 2rem;
+
+/* ==========================================================================
+   UTILITIES
+   ========================================================================== */
+
+@utility cell-grid {
+  /* Snap a container's width down to a whole number of cells so nothing ever
+     straddles half a character. */
+  width: round(down, 100%, var(--cell-w));
 }
- 
-code[data-line-numbers-max-digits="3"] > [data-line]::before {
-  width: 3rem;
+
+@utility glow {
+  text-shadow: var(--glow);
+}
+
+/* The ASCII field. One <pre>, one text node, never one span per cell:
+   11,700 spans fails Lighthouse's DOM-size audit on its own. */
+@utility ascii-field {
+  font-family: var(--font-departure);
+  font-size: 11px;
+  line-height: 14px;
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+  letter-spacing: 0;
+  white-space: pre;
+  user-select: none;
+  /* `content`, not `strict`: strict implies SIZE containment, which sizes the
+     element as if it were empty and collapses a shrink-to-fit <pre> to 0x0. */
+  contain: content;
+  tab-size: 1;
+}
+
+/* The content column. 896px at 7px/cell is 128 cells, with a 1rem gutter each
+   side so the measure never touches the viewport edge. */
+@utility measure {
+  margin-inline: auto;
+  max-width: min(100% - 2rem, 896px);
+}
+
+/* A bordered control: the site's only button-shaped thing. */
+@utility key {
+  border: 1px solid var(--rule);
+  background: var(--bg);
+  padding: var(--spacing) calc(var(--spacing) * 2);
+  color: var(--dim);
+  transition: color 150ms, border-color 150ms;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--amber);
+    color: var(--amber);
+  }
+}
+
+/* Chrome-weight link. focus-visible is part of the utility so it cannot be
+   omitted at one call site and present at another, which is how four of these
+   ended up keyboard-invisible. */
+@utility chrome-link {
+  color: var(--dim);
+  transition: color 150ms;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--amber);
+  }
+}
+
+@utility rule-h {
+  /* A rule drawn in characters, not a 1px div, so it sits on the lattice. */
+  &::before {
+    content: "";
+    display: block;
+    height: 1px;
+    background: var(--rule);
+  }
+}
+
+/* ==========================================================================
+   THE APERTURE GRILLE
+
+   Vertical stripes, Trinitron-style, dark theme only. Locked to a 3px period
+   at 0.055 opacity. Anything heavier eats a carefully computed 13:1 contrast
+   down to 8:1, which is why the usual 45%-opacity scanline overlay is banned.
+   Barrel distortion, chromatic aberration, rolling scanlines and analog noise
+   are all deliberately absent: they are the 2010 WebGL demo tell.
+   ========================================================================== */
+
+.grille {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  opacity: var(--grille-opacity);
+  background: repeating-linear-gradient(
+    90deg,
+    var(--ink-hi) 0px,
+    var(--ink-hi) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: multiply;
+}
+
+.dark .grille {
+  mix-blend-mode: screen;
+}
+
+[data-crt="off"] .grille {
+  display: none;
+}
+
+/* ==========================================================================
+   PROSE
+   ========================================================================== */
+
+.prose-terminal {
+  --tw-prose-body: var(--text);
+  --tw-prose-headings: var(--ink-hi);
+  --tw-prose-links: var(--cyan);
+  --tw-prose-bold: var(--ink-hi);
+  --tw-prose-counters: var(--dim);
+  --tw-prose-bullets: var(--rule);
+  --tw-prose-hr: var(--rule);
+  --tw-prose-quotes: var(--dim);
+  --tw-prose-quote-borders: var(--rule);
+  --tw-prose-captions: var(--dim);
+  --tw-prose-code: var(--amber);
+  --tw-prose-pre-code: var(--text);
+  --tw-prose-pre-bg: var(--bg-inset);
+  --tw-prose-th-borders: var(--rule);
+  --tw-prose-td-borders: var(--rule);
+  max-width: 72ch;
+}
+
+.prose-terminal :where(pre) {
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  font-size: 14px;
+  line-height: 28px;
+}
+
+.prose-terminal :where(code)::before,
+.prose-terminal :where(code)::after {
+  content: "";
+}
+
+/* Shiki bound to our own tokens so code blocks never ship a second,
+   conflicting palette. */
+.prose-terminal :where(pre) code {
+  display: grid;
+}
+.prose-terminal :where(pre) code > [data-line] {
+  padding-inline: calc(var(--cell-w) * 2);
+}
+
+/* ==========================================================================
+   MOTION
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes caret {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
 }
