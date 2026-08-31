@@ -197,6 +197,12 @@ figures are quoted from it.
 - Gradients fading to `transparent` interpolate toward transparent *black* and shift hue.
   Use relative colour syntax: `oklch(from var(--bg) l c h / 0)`.
 - React Bits components do not ship `"use client"`. See `src/components/vendor/README.md`.
+- **rehype-pretty-code detects a raw theme by `Object.hasOwn(theme, "tokenColors")`**, not by
+  Shiki's `settings`. A theme carrying only `settings` is misread as a `{light,dark}` map,
+  `Object.values()` is taken over it, and Shiki is asked for a theme named after whatever that
+  yields. `src/lib/shiki-theme.ts` declares both keys pointing at the same array.
+- `getPost` only returns null on `ENOENT`. Catching every error there made a broken Shiki theme
+  present as a 404, which is a long way to travel for a one-line bug.
 - `next/font` options must be written literals; a shared `const` fails the build.
 - **PixelSwap durations are milliseconds** (defaults 1400 / 450). Passing `0.42` runs the
   whole dissolve in under half a millisecond, which is indistinguishable from no animation.

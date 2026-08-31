@@ -47,16 +47,23 @@ async function readPostFile(slug: string) {
 export async function getPost(slug: string) {
   // Reject traversal before it reaches the filesystem.
   if (!/^[a-z0-9_-]+$/i.test(slug)) return null;
+
+  let parsed: ReturnType<typeof matter>;
   try {
-    const { content, data } = await readPostFile(slug);
-    return {
-      slug,
-      source: await markdownToHTML(content),
-      metadata: data as Omit<PostMeta, "slug">,
-    };
-  } catch {
-    return null;
+    parsed = await readPostFile(slug);
+  } catch (err) {
+    // Only a genuinely absent file is a 404. Catching everything here once made
+    // a broken Shiki theme look exactly like a missing post, which is a long
+    // way to travel for a one-line bug.
+    if ((err as NodeJS.ErrnoException)?.code === "ENOENT") return null;
+    throw err;
   }
+
+  return {
+    slug,
+    source: await markdownToHTML(parsed.content),
+    metadata: parsed.data as Omit<PostMeta, "slug">,
+  };
 }
 
 export async function getSlugs() {
