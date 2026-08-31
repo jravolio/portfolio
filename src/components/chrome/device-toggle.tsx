@@ -5,14 +5,23 @@ import { useSyncExternalStore } from "react";
 import PixelSwap from "@/components/vendor/PixelSwap";
 
 /**
- * The site is one document rendered on two output devices: paper (light) and
- * a CRT (dark). PixelSwap dissolves between the two labels from the centre,
- * which is the right gesture for a raster device repainting itself.
+ * Sun and moon, drawn in characters like everything else on the site.
  *
- * Driven through PixelSwap's controlled `active`/`onActiveChange` pair rather
- * than its internal state, so next-themes stays the single source of truth and
- * the two cannot drift apart.
+ * Three rows of three cells: 21x42px, exactly on the lattice. Departure Mono is
+ * a pixel font, so at 11px these read as hard little icons rather than as
+ * punctuation.
+ *
+ * PixelSwap dissolves between the two from the centre, which is the right
+ * gesture for a raster device repainting itself. It is driven through the
+ * controlled `active` prop rather than its internal state, so next-themes stays
+ * the single source of truth and the two cannot drift apart.
  */
+// Departure Mono has no dingbats (no sun, moon, or filled circle), but it does
+// carry the half-block set, which has far more ink than punctuation and so
+// actually reads at 11px. Measured from the face, not assumed.
+const SUN = ["\\|/", "-\u2588-", "/|\\"];
+const MOON = ["\u2584\u2580\u2580", "\u2588  ", "\u2580\u2584\u2584"];
+
 export function DeviceToggle({ label }: { label: string }) {
   const { resolvedTheme, setTheme } = useTheme();
   // Hydration guard: next-themes cannot know the resolved theme on the server.
@@ -26,15 +35,15 @@ export function DeviceToggle({ label }: { label: string }) {
 
   const isDark = resolvedTheme === "dark";
 
-  const face = (text: string) => (
-    <span className="flex h-full w-full items-center justify-center text-chrome tracking-normal">
-      {text}
+  const face = (rows: string[]) => (
+    <span className="flex h-full w-full items-center justify-center">
+      <pre className="ascii-field m-0 bg-transparent p-0 leading-[14px]">{rows.join("\n")}</pre>
     </span>
   );
 
   if (!mounted) {
     // Reserve the exact cell footprint so nothing shifts on hydration.
-    return <div aria-hidden="true" style={{ width: 126, height: 28 }} />;
+    return <div aria-hidden="true" style={{ width: 42, height: 42 }} />;
   }
 
   return (
@@ -43,21 +52,21 @@ export function DeviceToggle({ label }: { label: string }) {
       aria-label={label}
       aria-pressed={isDark}
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className="border border-rule text-dim hover:border-amber hover:text-amber focus-visible:text-amber"
-      style={{ width: 126, height: 28 }}
+      className="border border-rule text-dim transition-colors hover:border-amber hover:text-amber focus-visible:text-amber"
+      style={{ width: 42, height: 42 }}
     >
       <PixelSwap
-        firstContent={face("[ paper ]")}
-        secondContent={face("[ crt ]")}
+        firstContent={face(SUN)}
+        secondContent={face(MOON)}
         active={isDark}
         trigger="manual"
         pattern="center"
         // PixelSwap's durations are MILLISECONDS (defaults 1400 / 450), not
         // seconds. Passing 0.42 ran the whole dissolve in under half a
         // millisecond, which looks exactly like no animation at all.
-        duration={820}
-        pixelDuration={360}
-        pixelSize={9}
+        duration={720}
+        pixelDuration={320}
+        pixelSize={8}
         gap={1}
         pixelSpin={0}
         pixelScale={0.6}

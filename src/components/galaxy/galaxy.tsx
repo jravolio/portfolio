@@ -2,13 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePrefersReducedMotion } from "@/hooks/use-reduced-motion";
-import { createRenderer, type Mode, type Renderer, type Stats } from "@/lib/ascii/renderer";
+import { createRenderer, type Renderer, type Stats } from "@/lib/ascii/renderer";
 
 type Props = {
   /** The baked frame, inlined by the server. First paint, and the fallback. */
   staticFrame: string;
   labels: { halt: string; resume: string; alt: string; reducedMotionNote: string };
-  mode?: Mode;
   /** Where the hole sits, in normalised screen units. Right of centre by default. */
   centerX?: number;
   centerY?: number;
@@ -34,7 +33,6 @@ export function Galaxy({
   centerX = 0.42,
   centerY = 0,
   scale = 2.5,
-  mode = "braille",
   onStats,
 }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -75,7 +73,7 @@ export function Galaxy({
         brailleFontFamily:
           getComputedStyle(document.documentElement).getPropertyValue("--font-commit").trim() ||
           "monospace",
-        mode,
+        mode: "braille",
         onStats: (s) => onStats?.(s),
       });
     } catch {
@@ -130,17 +128,8 @@ export function Galaxy({
       rendererRef.current = null;
       setLive(false);
     };
-    // `mode` is deliberately excluded: it seeds the initial renderer, and the
-    // effect below swaps it live. Including it here would tear down and rebuild
-    // the WebGL context on every toggle.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reduced, syncColors, centerX, centerY, scale, onStats]);
 
-  // Swapping the atlas and rebuilding the field target is cheap; recreating the
-  // WebGL context is not, so this lives outside the effect above.
-  useEffect(() => {
-    rendererRef.current?.setMode(mode);
-  }, [mode]);
 
   function togglePause() {
     const r = rendererRef.current;
@@ -187,7 +176,7 @@ export function Galaxy({
         // SC 2.2.2: the loop auto-starts, runs past five seconds and sits
         // alongside content, so a pause control is a Level A requirement.
         // Pinned to the hero's bottom-right, in the readout's row.
-        <div className="absolute bottom-2 right-4 z-10 md:right-8">
+        <div className="absolute bottom-3 right-4 z-10 md:right-8">
           <button
             type="button"
             onClick={togglePause}

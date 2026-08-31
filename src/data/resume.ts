@@ -57,7 +57,8 @@ export type Dictionary = {
   identity: string;
   now: string;
   offClock: string;
-  /** Status-line items. Real facts only, never a decorative logo ticker. */
+  /** Marquee line. Facts about Julio, every one traceable to the résumé.
+   *  Not build metadata and never a decorative logo ticker. */
   ticker: string[];
   nav: { index: string; work: string; writing: string; render: string };
   headings: {
@@ -117,18 +118,20 @@ export const CONTENT: Record<Locale, Dictionary> = {
       "Off the clock I am at a table rolling dice. Tabletop RPGs are the hobby, and RollSummary came straight out of it: sessions run long, memory runs short, so I built something that listens to a session and writes down what actually happened. Most of what I know about state machines I learned from arguing over initiative order.",
     ticker: [
       "rio de janeiro, brazil",
+      "full-stack engineer at planetbids, contracted via gofasti",
       "building e-procurement for US public agencies",
       "python · django · react · aws · terraform",
+      "wrote planetbids' first terraform config, and the guidelines with it",
+      "one email service replacing logic that lived in six places",
+      "cut the ont homologation process at v.tal by 80%",
+      "taught an ai vision layer to read scanned bid documents",
+      "keep react and ember talking to each other for a living",
+      "started out watching grafana and zabbix at 3am",
       "tabletop rpgs on the weekend",
       "d20 · initiative order · session zero",
       "rollsummary.com transcribes my sessions",
-      "en / pt",
-      "departure mono 11px · commit mono 16/28",
-      "cell 7x14px · aspect 0.500",
-      "logarithmic spiral · pitch 19°",
-      "arms rotate as a density wave, not as material",
-      "ramp measured at boot, never hand-ordered",
-      "no analytics beyond page counts",
+      "english and portuguese, both native",
+      "bsc computer science, estácio",
     ],
     nav: { index: "index", work: "work", writing: "writing", render: "render" },
     headings: {
@@ -300,18 +303,20 @@ export const CONTENT: Record<Locale, Dictionary> = {
       "Fora do expediente eu estou numa mesa rolando dados. RPG de mesa é o hobby, e o RollSummary saiu direto dele: as sessões são longas e a memória é curta, então construí algo que escuta a sessão e anota o que de fato aconteceu. Boa parte do que sei sobre máquinas de estado eu aprendi discutindo ordem de iniciativa.",
     ticker: [
       "rio de janeiro, brasil",
+      "engenheiro full-stack na planetbids, contratado via gofasti",
       "compras públicas para órgãos americanos",
       "python · django · react · aws · terraform",
+      "escrevi o primeiro terraform da planetbids, e as diretrizes junto",
+      "um serviço de e-mail no lugar de lógica espalhada por seis lugares",
+      "reduzi em 80% a homologação de ONTs na v.tal",
+      "ensinei uma camada de visão a ler documentos digitalizados",
+      "vivo fazendo react e ember conversarem",
+      "comecei olhando grafana e zabbix às 3 da manhã",
       "rpg de mesa no fim de semana",
       "d20 · ordem de iniciativa · sessão zero",
       "rollsummary.com transcreve minhas sessões",
-      "en / pt",
-      "departure mono 11px · commit mono 16/28",
-      "célula 7x14px · proporção 0.500",
-      "espiral logarítmica · pitch 19°",
-      "os braços giram como onda de densidade, não como matéria",
-      "rampa medida no boot, nunca ordenada à mão",
-      "sem analytics além de contagem de páginas",
+      "inglês e português, ambos nativos",
+      "bacharelado em ciência da computação, estácio",
     ],
     nav: { index: "início", work: "trajetória", writing: "textos", render: "render" },
     headings: {

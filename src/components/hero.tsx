@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Galaxy } from "@/components/galaxy/galaxy";
 import { CopyEmail } from "@/components/chrome/copy-email";
-import type { Mode, Stats } from "@/lib/ascii/renderer";
 
 type Props = {
   staticFrame: string;
@@ -30,9 +28,7 @@ type Props = {
  * column reading over the empty sky beside it.
  */
 export function Hero(props: Props) {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [mode, setMode] = useState<Mode>("braille");
-  // On a narrow viewport there is no left column to sit beside, so the hole
+  // On a narrow viewport there is no left column to sit beside, so the galaxy
   // drops below the copy and the scrim runs top-to-bottom instead.
   const narrow = useMediaQuery("(max-width: 768px)", false);
 
@@ -49,8 +45,6 @@ export function Hero(props: Props) {
         centerX={narrow ? 0 : 0.92}
         centerY={narrow ? -0.78 : 0}
         scale={narrow ? 3.4 : 2.5}
-        mode={mode}
-        onStats={setStats}
         labels={{
           halt: props.labels.halt,
           resume: props.labels.resume,
@@ -110,58 +104,6 @@ export function Hero(props: Props) {
         </div>
       </div>
 
-      {/* The readout, pinned to the bottom of the hero. Live-bound to the
-          uniforms: drag the field and watch `incl` move. That is the proof it
-          is computed rather than looped. */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0">
-        <div className="mx-auto flex max-w-[min(100%-2rem,1280px)] flex-wrap items-center gap-x-4 gap-y-1 border-t border-rule bg-bg/95 px-2 py-2 pr-28 text-chrome text-dim backdrop-blur-[1px]">
-          <span aria-hidden="true">Sc spiral · m=2</span>
-          <span aria-hidden="true" data-numeric>
-            pitch 19°
-          </span>
-          {stats ? (
-            <>
-              <span aria-hidden="true" data-numeric>
-                incl {stats.incl.toFixed(2)} rad
-              </span>
-              <span aria-hidden="true" data-numeric>
-                {stats.cols}x{stats.rows} cells
-                {stats.mode === "braille" ? ` · ${stats.samples.toLocaleString("en-US")} dots` : ""}
-              </span>
-              <span aria-hidden="true" data-numeric>
-                {stats.steps} steps
-              </span>
-              <span aria-hidden="true" data-numeric>
-                {stats.frameMs.toFixed(1)} ms
-              </span>
-            </>
-          ) : (
-            <span aria-hidden="true">pre-rendered frame</span>
-          )}
-
-          {/* Flipping between the two is the clearest way to show what the
-              Braille sub-cell raster buys: same grid, eight times the samples. */}
-          {stats ? (
-            <div className="pointer-events-auto ml-auto flex items-center gap-1">
-              {(["ramp", "braille"] as const).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setMode(m)}
-                  aria-pressed={mode === m}
-                  className={
-                    mode === m
-                      ? "border border-amber px-2 text-chrome text-amber"
-                      : "border border-rule px-2 text-chrome text-dim hover:border-amber hover:text-amber"
-                  }
-                >
-                  {m === "ramp" ? "[ \u2591 blocks ]" : "[ \u28ff braille ]"}
-                </button>
-              ))}
-            </div>
-          ) : null}
-        </div>
-      </div>
     </section>
   );
 }

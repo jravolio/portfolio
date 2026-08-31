@@ -120,8 +120,10 @@ allocated at `cols*2 x rows*4` so every Braille dot maps to exactly one field te
 - Braille needs its own tone curve (`TONE.braille`): it resolves 8x more samples, so the ramp's
   black point leaves the outer falloff reading as an even dither.
 
-`[ blocks | braille ]` in the hero readout swaps mode live. It rebuilds the atlas and the field
-target but never the GL context.
+Braille is the only shipped mode. The ramp path survives underneath as a silent fallback for a
+face without the Braille block (`buildBrailleAtlas` throws, the renderer catches and drops to
+`ramp`), but nothing user-facing selects it. The hero carries no stats readout: the field runs to
+the section boundary instead of under a bar.
 
 ### Spiral structure
 

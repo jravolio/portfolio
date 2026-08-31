@@ -103,7 +103,8 @@ export default async function RenderPage({ params }: { params: Promise<{ lng: st
           U+2800&ndash;28FF is a 2&times;4 dot matrix per character, so rendering into Braille rather
           than a luminance ramp carries <strong>eight times</strong> the effective resolution on
           exactly the same character grid: 80,360 addressable dots at 205&times;49 instead of 10,045
-          cells. The toggle in the hero readout flips between them.
+          cells. It is the only mode the field ships in; the coarser ramp survives underneath purely
+          as a fallback for a font without the Braille block, and nothing user-facing selects it.
         </p>
         <p>
           It comes with a hard constraint. Departure Mono contains <strong>0 of the 256</strong>{" "}
