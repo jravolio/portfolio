@@ -114,6 +114,16 @@ allocated at `cols*2 x rows*4` so every Braille dot maps to exactly one field te
 `[ blocks | braille ]` in the hero readout swaps mode live. It rebuilds the atlas and the field
 target but never the GL context.
 
+### Spiral structure
+
+`ARMS` is how many angular periods wrap the disk and `SHEAR` is the radial twist that turns
+concentric bands into a spiral. At `ARMS = 19` the filaments fall below the dither resolution and
+the whole disk collapses into uniform grain; **3 broad arms** at `SHEAR = 0.4` wind roughly half a
+turn across the disk and actually read as spiral structure.
+
+Density is `band * (0.02 + 3.0 * sn^3)`. The cube matters: it drives the gaps between arms toward
+empty, which is what stops the dither grain from competing with the arms for the eye.
+
 ### The ramp is measured
 
 `atlas.ts` rasterises every candidate glyph at boot and sorts by integrated alpha.

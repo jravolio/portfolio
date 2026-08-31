@@ -35,7 +35,7 @@ export function BlackHole({
   labels,
   centerX = 0.42,
   centerY = 0,
-  scale = 11,
+  scale = 9,
   mode = "braille",
   onStats,
 }: Props) {

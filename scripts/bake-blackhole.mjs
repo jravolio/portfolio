@@ -36,7 +36,7 @@ const INCL = Number(process.env.BH_INCL ?? 1.12);
 // r_s per half-grid-height. Two-sided: the shadow must stay in the 20-40 cell
 // band where a silhouette reads, and the disk's outer edge must land inside the
 // frame with sky left over.
-const SCALE = Number(process.env.BH_SCALE ?? 11.0);
+const SCALE = Number(process.env.BH_SCALE ?? 9.0);
 
 const CELL_ASPECT = 0.5; // measured: Departure Mono advance 7px / line 14px
 
@@ -46,6 +46,19 @@ const CELL_ASPECT = 0.5; // measured: Departure Mono advance 7px / line 14px
 const RAMP = " .·:-=+*oO#%@";
 
 const TAU = Math.PI * 2;
+
+// Spiral structure. ARMS is how many angular periods wrap the disk: high values
+// put the filaments below the dither resolution and the whole disk collapses
+// into uniform grain. SHEAR is the radial twist that turns concentric bands
+// into spirals. RFREQ is the radial detail frequency.
+const ARMS = Number(process.env.BH_ARMS ?? 3);
+const SHEAR = Number(process.env.BH_SHEAR ?? 0.4);
+const RFREQ = Number(process.env.BH_RFREQ ?? 0.55);
+// Arm contrast. A higher POW drives the gaps between arms toward empty, which
+// is what stops the dither grain from competing with the spiral structure.
+const FLOOR = Number(process.env.BH_FLOOR ?? 0.02);
+const GAIN = Number(process.env.BH_GAIN ?? 3.0);
+const POW = Number(process.env.BH_POW ?? 3);
 
 // --- value noise, wrapped on an integer period in y -------------------------
 // The swirl is sampled in (radius, angle) space. If the noise does not wrap on
@@ -161,10 +174,11 @@ function trace(px, py, time) {
         const kep = Math.pow(R_IN / rc, 1.5); // Kepler: omega ~ r^-3/2
         const gloc = Math.sqrt(Math.max(1 - 1.5 / rc, 0.02)); // time dilation
 
-        const M = 19;
-        const yy = (phi * M) / TAU + rc * 0.84 - time * kep * gloc * 5.0;
+        const M = ARMS;
+        const yy = (phi * M) / TAU + rc * SHEAR - time * kep * gloc * 5.0;
         const sn =
-          vnoiseWrapY(rc * 2.8, yy, M) * 0.65 + vnoiseWrapY(rc, yy * 0.5 + 7.0, M) * 0.35;
+          vnoiseWrapY(rc * RFREQ, yy, M) * 0.65 +
+          vnoiseWrapY(rc * RFREQ * 0.36, yy * 0.5 + 7.0, M) * 0.35;
 
         // orbital velocity direction = n x xc
         const gd = [
@@ -183,7 +197,7 @@ function trace(px, py, time) {
         const xpr = Math.max(1 - Math.sqrt(R_IN / rc), 0);
         const tprof = (Math.pow(R_IN / rc, 0.75) * Math.pow(xpr, 0.25)) / 0.488;
 
-        const density = band * (0.10 + 2.1 * sn * sn);
+        const density = band * (FLOOR + GAIN * Math.pow(sn, POW));
         // tprof^2, not tprof^4: bolometric I ~ T^4 collapses to one bright
         // cell once quantised to 13 glyphs.
         emit += trans * Number(process.env.BH_EMIT ?? 2.2) * density * tprof * tprof * Math.pow(g, BEAM);
@@ -231,7 +245,7 @@ function ign(x, y) {
 
 export function renderBraille(cols, rows, time = 0) {
   RING_W = Math.max(Number(process.env.BH_RINGW ?? 0.45) * ((2 * SCALE) / rows), 0.05);
-  const black = Number(process.env.BH_BLACK ?? 0.3);
+  const black = Number(process.env.BH_BLACK ?? 0.18);
   const gam = Number(process.env.BH_GAMMA ?? 1.05);
   const out = [];
 

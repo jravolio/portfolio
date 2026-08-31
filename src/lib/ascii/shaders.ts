@@ -121,10 +121,19 @@ void main() {
         float kep  = pow(R_IN / rc, 1.5);                  // Kepler
         float gloc = sqrt(max(1.0 - 1.5 / rc, 0.02));      // time dilation
 
-        const float M = 19.0;
-        float yy = phi * (M / TAU) + rc * 0.84 - uTime * kep * gloc * 5.0;
-        float sn = vnoiseWrapY(vec2(rc * 2.8, yy), M) * 0.65
-                 + vnoiseWrapY(vec2(rc, yy * 0.5 + 7.0), M) * 0.35;
+        // ARMS is how many angular periods wrap the disk. At 19 the filaments
+        // fall below the dither resolution and the whole disk collapses into
+        // uniform grain; 7 gives broad arms that actually read as spirals.
+        // SHEAR is the radial twist that turns concentric bands into a spiral.
+        // Few, broad arms winding right across the disk, the way a spiral
+        // galaxy reads. At high ARMS the filaments fall below the dither
+        // resolution and the disk collapses into uniform grain.
+        const float ARMS = 3.0;
+        const float SHEAR = 0.4;
+        const float RFREQ = 0.55;
+        float yy = phi * (ARMS / TAU) + rc * SHEAR - uTime * kep * gloc * 5.0;
+        float sn = vnoiseWrapY(vec2(rc * RFREQ, yy), ARMS) * 0.65
+                 + vnoiseWrapY(vec2(rc * RFREQ * 0.36, yy * 0.5 + 7.0), ARMS) * 0.35;
 
         vec3  gasdir = normalize(cross(n, xc));
         float beta   = clamp(inversesqrt(max(2.0 * (rc - 1.0), 0.2)), 0.0, 0.99);
@@ -132,7 +141,10 @@ void main() {
         float xpr    = max(1.0 - sqrt(R_IN / rc), 0.0);
         float tprof  = pow(R_IN / rc, 0.75) * pow(xpr, 0.25) / 0.488;
 
-        float density = band * (0.10 + 2.1 * sn * sn);
+        // Cubed, not squared. A higher power drives the gaps between arms
+        // toward empty, which is what stops the dither grain from competing
+        // with the spiral structure for the eye.
+        float density = band * (0.02 + 3.0 * sn * sn * sn);
         // tprof^2, not tprof^4: bolometric I ~ T^4 collapses to a single bright
         // cell once quantised to a dozen glyphs.
         emit  += trans * 2.5 * density * tprof * tprof * pow(g, BEAM);

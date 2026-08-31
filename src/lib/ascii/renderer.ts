@@ -182,14 +182,14 @@ export function createRenderer(opts: RendererOptions) {
   const incl = 1.15;
   let center: [number, number] = [0, 0];
   // r_s per half-grid-height. Lower = the hole fills more of the frame.
-  let scale = 11;
+  let scale = 9;
 
   // Braille resolves 8x more samples, so it shows far more of the field's low
 // end; it needs a higher black point and a steeper curve than the ramp to keep
 // the outer falloff from reading as an even dither texture.
 const TONE = {
   ramp: { black: 0.14, gamma: 0.75 },
-  braille: { black: 0.3, gamma: 1.05 },
+  braille: { black: 0.18, gamma: 1.05 },
 };
 const tune = { nameGain: 0.62, edge: 2.4, skyZ: -26.0 };
 if (typeof window !== "undefined") (window as unknown as Record<string, unknown>).__bh = tune;

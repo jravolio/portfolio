@@ -49,7 +49,7 @@ export function Hero(props: Props) {
         headline={props.name.toUpperCase()}
         centerX={narrow ? 0 : 0.44}
         centerY={narrow ? -0.78 : 0}
-        scale={narrow ? 15 : 11}
+        scale={narrow ? 13 : 9}
         mode={mode}
         onStats={setStats}
         labels={{
