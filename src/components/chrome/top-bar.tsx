@@ -4,7 +4,7 @@ import { getContent, SITE, type Locale } from "@/data/resume";
 
 /**
  * Four nav items, lowercase, one of them weird. `render` is the weird one and
- * it is the most important page on the site: it is what turns the black hole
+ * it is the most important page on the site: it is what turns the field
  * from art direction into an engineering artifact.
  */
 export function TopBar({ lng }: { lng: Locale }) {

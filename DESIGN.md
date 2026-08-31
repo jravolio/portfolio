@@ -87,7 +87,7 @@ spectacle: the field. Everything below the hero is flat and instant.
 
 Two exceptions earn their place. The device toggle dissolves pixel-by-pixel from the
 centre over ~820ms, which is the right gesture for a raster device repainting itself. The
-contact heading resolves out of the black hole's own ramp glyphs, once, on first scroll
+contact heading resolves out of the field's own ramp glyphs, once, on first scroll
 into view.
 
 That heading was first built with a particle effect and rebuilt. Departure Mono is a pixel

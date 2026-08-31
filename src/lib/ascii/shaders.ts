@@ -7,186 +7,120 @@ void main() { gl_Position = vec4(P[gl_VertexID], 0.0, 1.0); }
 /* ==========================================================================
    PASS 1 - the field.
 
-   A backwards Schwarzschild null-geodesic integrator, one photon per
-   supersample. Escaped rays land on a sky plane carrying the headline
-   texture, which is what produces the lensed name and its mirrored copy
-   inside the Einstein ring.
+   A spiral galaxy. Logarithmic arms over an exponential disk and a Sersic
+   bulge, inclined and projected.
+
+   The arms rotate as a DENSITY WAVE (Lin & Shu 1964), not as material. The
+   pattern turns rigidly at a constant pattern speed while the gas and stars
+   orbit at their own, radius-dependent rate. That is the real resolution of
+   the winding problem: material arms in a differentially rotating disk would
+   coil themselves out of existence within a couple of galactic years.
+   Rotating the pattern rigidly is both the physics and the only thing that
+   looks stable over a long-running loop.
    ========================================================================== */
 export const FIELD_FRAG = /* glsl */ `#version 300 es
 precision highp float;
 
-#define N_STEPS_MAX 64
-
 uniform vec2  uField;        // supersampled field resolution
 uniform float uCellAspect;   // MEASURED advance/lineHeight. 0.5 for Departure Mono.
 uniform float uGridAspect;   // cols/rows
-uniform float uScale;        // r_s per half-grid-height
-uniform float uIncl;
+uniform float uScale;        // disk scale lengths per half-grid-height
+uniform float uIncl;         // inclination; 0 = face on
 uniform float uTime;
-uniform vec2  uParallax;
-uniform vec2  uCenter;      // where the hole sits, in normalised screen units
-uniform int   uSteps;
-uniform sampler2D uSky;      // the headline, rendered to a texture
-uniform float uSkyZ;
-uniform float uRingW;
-uniform float uNameGain;
+uniform vec2  uCenter;
 
 out vec4 fragColor;
 
-const float R_IN    = 3.0;
-const float R_OUT   = 11.0;
-const float B_CRIT  = 2.598076211;   // 3*sqrt(3)/2 - the APPARENT shadow radius
-// Relativistic beaming exponent. Theory says 3+alpha; this was detuned to 1.9
-// to keep the receding limb above the ramp floor, and that flattened the one
-// cue that makes the shadow legible. At 3.0 the approaching side throws a
-// bright crescent right against the shadow, which is what draws the silhouette.
-const float BEAM    = 3.0;
-const float OPACITY = 0.9;
-const float TAU     = 6.28318530718;
+const float TAU = 6.28318530718;
 
-float hash2(vec2 p) {
-  return fract(sin(p.x * 127.1 + p.y * 311.7) * 43758.5453);
+// Sa-Sc galaxies average a pitch angle at or under 15.5 degrees, opening up
+// toward later Hubble types. 19 degrees sits in Sc territory: tighter than this
+// and the arms fall below the glyph resolution and read as concentric rings.
+const float PITCH = 0.331;          // radians, ~19 degrees
+const float ARMS  = 2.0;            // m=2, a grand-design spiral
+const float R_DISK = 1.0;           // exponential disk scale length
+const float R_BULGE = 0.14;         // Sersic effective radius
+const float DE_VAUC = 7.669;        // Sersic n=4 normalisation
+
+float hash(vec2 p) {
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
 
-// Wrapped on an integer period in y. Without the wrap the atan branch cut
-// shows up as a hard radial seam across the disk.
-float vnoiseWrapY(vec2 p, float period) {
+float vnoise(vec2 p) {
   vec2 i = floor(p), f = fract(p);
   vec2 u = f * f * (3.0 - 2.0 * f);
-  float y0 = mod(i.y, period);
-  float y1 = mod(y0 + 1.0, period);
-  float a = hash2(vec2(i.x, y0));
-  float b = hash2(vec2(i.x + 1.0, y0));
-  float c = hash2(vec2(i.x, y1));
-  float d = hash2(vec2(i.x + 1.0, y1));
-  return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+  return mix(mix(hash(i), hash(i + vec2(1, 0)), u.x),
+             mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), u.x), u.y);
+}
+
+float fbm(vec2 p) {
+  return vnoise(p) * 0.6 + vnoise(p * 2.1 + 7.3) * 0.3 + vnoise(p * 4.7 + 19.1) * 0.1;
 }
 
 void main() {
   vec2 c = (gl_FragCoord.xy / uField) * 2.0 - 1.0;
-  // Cell space -> aspect-corrected world plane. Skip this and the photon ring
-  // renders as an ellipse.
+  // Cell space -> aspect-corrected screen. Skip this and a face-on galaxy
+  // renders as an ellipse purely from the 2:1 character cell.
   c.x *= uGridAspect * uCellAspect;
-  vec2 pr = (c - uCenter) * uScale + uParallax;
+  vec2 p = (c - uCenter) * uScale;
 
-  // Orthographic. A perspective camera was tried and removed: at a few thousand
-  // glyphs the extra depth cue does not survive quantisation, and the diverging
-  // rays smear the disk's outer halo into fog across the whole frame.
-  float Z0 = R_OUT + 6.0;
-  vec3 x = vec3(pr, Z0);
-  vec3 v = vec3(0.0, 0.0, -1.0);
+  // De-project: the disk is a circle in its own plane, squashed on screen by
+  // the inclination. Dividing y back out recovers disk coordinates.
+  float ci = max(cos(uIncl), 0.12);
+  vec2 d = vec2(p.x, p.y / ci);
 
-  // Conserved angular momentum, computed ONCE. The acceleration is parallel to
-  // x, so h^2 is exactly conserved; recomputing it per step from a drifting
-  // cross product makes the photon ring wobble.
-  float h2 = dot(pr, pr);
+  float r = length(d);
+  float th = atan(d.y, d.x);
 
-  float ci = cos(uIncl), si = sin(uIncl);
-  vec3 n  = vec3(0.0, si, ci);
-  vec3 e2 = vec3(0.0, ci, -si);
+  // --- structure ---------------------------------------------------------
+  // Exponential disk, Sigma(R) = Sigma_0 exp(-R/Rs).
+  float disk = exp(-r / R_DISK);
 
-  float emit = 0.0, trans = 1.0;
-  float sPrev = dot(x, n);
-  vec3  xPrev = x;
-  bool  captured = false;
+  // de Vaucouleurs bulge, the n=4 Sersic case.
+  float bulge = exp(-DE_VAUC * (pow(max(r, 0.02) / R_BULGE, 0.25) - 1.0));
 
-  for (int i = 0; i < N_STEPS_MAX; i++) {
-    if (i >= uSteps) break;
+  // --- the density wave --------------------------------------------------
+  // A logarithmic spiral has a constant pitch angle: theta = ln(r/a)/tan(p).
+  // Subtracting a rigid uTime term rotates the PATTERN, leaving the arms
+  // permanently open instead of winding up.
+  float armPhase = log(max(r, 0.04)) / tan(PITCH);
+  float wave = cos(ARMS * (th - armPhase) - uTime * 0.22);
 
-    float r2 = dot(x, x);
-    if (r2 < 1.0) { captured = true; break; }
-    if (x.z < -Z0 && v.z < 0.0) break;
+  // Sharpen the sinusoid into arms with real gaps between them.
+  float arm = pow(max(wave, 0.0), 2.2);
 
-    float r = sqrt(r2);
-    float dt = clamp(0.16 * r, 0.04, 1.5);
+  // Dust lanes sit just inside the arms, where the gas piles up on the
+  // leading edge of the wave. Offsetting the phase is what puts them there.
+  float dustWave = cos(ARMS * (th - armPhase) - uTime * 0.22 + 0.55);
+  float dust = pow(max(dustWave, 0.0), 3.5) * smoothstep(0.15, 0.6, r);
 
-    // Binet-form photon acceleration:  a = -(3/2) h^2 x / r^5
-    // Exact Schwarzschild bending, photon sphere at r = 1.5.
-    // Leapfrog, NOT Euler: at this step size Euler spirals escaping rays into
-    // the hole and visibly thickens the shadow.
-    vec3 a = -1.5 * h2 * x / (r2 * r2 * r);
-    v += a * (0.5 * dt);
-    x += v * dt;
-    r2 = dot(x, x); r = sqrt(r2);
-    a  = -1.5 * h2 * x / (r2 * r2 * r);
-    v += a * (0.5 * dt);
+  // --- texture -----------------------------------------------------------
+  // Material orbits differentially even though the pattern does not, so the
+  // clumping shears while the arms hold. A flat rotation curve means the
+  // angular rate falls as 1/r.
+  float orbit = th - uTime * 0.5 / max(r, 0.22);
+  vec2 tex = vec2(cos(orbit), sin(orbit)) * r;
+  float clumps = fbm(tex * 3.4 + 11.0);
+  float hii = smoothstep(0.62, 0.95, fbm(tex * 7.0 + 3.0)) * arm;
 
-    // Thin-disk plane crossing. A bent ray crosses two to four times, and
-    // those extra crossings ARE the lensed arc over the shadow.
-    float s = dot(x, n);
-    if (s * sPrev < 0.0 && trans > 0.02) {
-      float tc = sPrev / (sPrev - s);
-      vec3  xc = mix(xPrev, x, tc);
-      float rc = length(xc);
-      if (rc > R_IN && rc < R_OUT) {
-        float band = smoothstep(R_IN, R_IN * 1.25, rc)
-                   * (1.0 - smoothstep(R_OUT * 0.70, R_OUT, rc));
-        float phi  = atan(dot(xc, e2), xc.x);
-        float kep  = pow(R_IN / rc, 1.5);                  // Kepler
-        float gloc = sqrt(max(1.0 - 1.5 / rc, 0.02));      // time dilation
+  float L = bulge * 0.7
+          + disk * (0.25 + 1.9 * arm) * (0.5 + 1.0 * clumps)
+          + hii * 0.7;
 
-        // ARMS is how many angular periods wrap the disk. At 19 the filaments
-        // fall below the dither resolution and the whole disk collapses into
-        // uniform grain; 7 gives broad arms that actually read as spirals.
-        // SHEAR is the radial twist that turns concentric bands into a spiral.
-        // Few, broad arms winding right across the disk, the way a spiral
-        // galaxy reads. At high ARMS the filaments fall below the dither
-        // resolution and the disk collapses into uniform grain.
-        const float ARMS = 3.0;
-        const float SHEAR = 0.4;
-        const float RFREQ = 0.55;
-        float yy = phi * (ARMS / TAU) + rc * SHEAR - uTime * kep * gloc * 5.0;
-        float sn = vnoiseWrapY(vec2(rc * RFREQ, yy), ARMS) * 0.65
-                 + vnoiseWrapY(vec2(rc * RFREQ * 0.36, yy * 0.5 + 7.0), ARMS) * 0.35;
+  L *= 1.0 - 0.6 * dust * disk;
 
-        vec3  gasdir = normalize(cross(n, xc));
-        float beta   = clamp(inversesqrt(max(2.0 * (rc - 1.0), 0.2)), 0.0, 0.99);
-        float g      = gloc / max(1.0 + beta * dot(gasdir, normalize(v)), 0.05);
-        float xpr    = max(1.0 - sqrt(R_IN / rc), 0.0);
-        float tprof  = pow(R_IN / rc, 0.75) * pow(xpr, 0.25) / 0.488;
+  // Faint field stars, fixed to the sky rather than the disk.
+  float star = step(0.9975, hash(floor(gl_FragCoord.xy * 0.5)));
+  L += star * 0.5;
 
-        // Cubed, not squared. A higher power drives the gaps between arms
-        // toward empty, which is what stops the dither grain from competing
-        // with the spiral structure for the eye.
-        float density = band * (0.02 + 3.0 * sn * sn * sn);
-        // tprof^2, not tprof^4: bolometric I ~ T^4 collapses to a single bright
-        // cell once quantised to a dozen glyphs.
-        emit  += trans * 2.5 * density * tprof * tprof * pow(g, BEAM);
-        trans *= 1.0 - clamp(OPACITY * density, 0.0, 1.0);
-      }
-    }
-    sPrev = s;
-    xPrev = x;
-  }
+  L = 1.0 - exp(-L * 1.9);
 
-  // Rays still winding near the photon sphere when the budget ran out are as
-  // good as captured. This single line keeps the shadow edge clean at low step
-  // counts.
-  if (!captured && dot(x, x) < 4.0) captured = true;
+  // Accent mask. Bulges really are red-yellow (old stellar populations) and
+  // arms blue-white (young hot stars), so tinting the nucleus and the HII
+  // regions is the astronomically correct way to spend the second colour.
+  float accent = clamp(bulge * 1.4 + hii * 0.8, 0.0, 1.0);
 
-  // --- the sky plane: the headline, lensed -------------------------------
-  float nameL = 0.0;
-  if (!captured && v.z < -0.001) {
-    float t = (x.z - uSkyZ) / (-v.z);
-    if (t > 0.0) {
-      vec2 hit = (x + v * t).xy;
-      // uCenter is added back so the plate stays fixed to the viewport while
-      // the hole is offset: only lensing should bend the headline.
-      vec2 uv = (hit / (uScale * 2.0) + uCenter) * 0.5 + 0.5;
-      if (all(greaterThan(uv, vec2(0.0))) && all(lessThan(uv, vec2(1.0)))) {
-        nameL = texture(uSky, vec2(uv.x, 1.0 - uv.y)).r * trans * uNameGain;
-      }
-    }
-  }
-
-  float diskL = 1.0 - exp(-emit * 1.7);
-
-  // Analytic photon-ring coverage, carried separately so the quantiser can keep
-  // the ring exactly one cell wide instead of letting it dither.
-  float rr = length(pr);
-  float ringCov = exp(-pow((rr - B_CRIT) / uRingW, 2.0));
-
-  fragColor = vec4(diskL, ringCov, nameL, 1.0);
+  fragColor = vec4(L, accent, 0.0, 1.0);
 }
 `;
 
@@ -268,24 +202,8 @@ float brailleCell(vec2 id, float black, float gamma) {
       vec2 sub = vec2(id.x * 2.0 + float(sx), id.y * 4.0 + float(3 - sy));
       vec4 f = texture(uField, (sub + 0.5) / (uGrid * vec2(2.0, 4.0)));
 
-      float disk = f.r;
-      float ring = f.g;
-      float name = f.b;
-
-      // The photon ring is analytic, so it must NOT go through the dither.
-      // Thresholding it like everything else shatters a one-dot-wide feature
-      // into speckle - it is the thinnest thing in the frame and the dither
-      // has nothing to trade against. Forced on, it stays unbroken at every
-      // grid size, and at 2x4 dots per cell it is finer than the ramp's ring.
-      bool lit = ring > 0.45;
-
-      if (!lit) {
-        float L = clamp(max(disk, name) + ring * (0.85 + 0.5 * disk), 0.0, 1.0);
-        L = pow(clamp((L - black) / (1.0 - black), 0.0, 1.0), gamma);
-        lit = L > ign(sub);
-      }
-
-      if (lit) {
+      float L = pow(clamp((f.r - black) / (1.0 - black), 0.0, 1.0), gamma);
+      if (L > ign(sub)) {
         bits += (sy < 3) ? exp2(float(sy + 3 * sx)) : exp2(float(6 + sx));
       }
     }
@@ -298,28 +216,14 @@ void main() {
 
   if (uBraille > 0.5) {
     vec4 c = cell(id);
-    fragColor = vec4(
-      brailleCell(id, uBlack, uGamma) / 255.0,
-      clamp(c.b * 1.6, 0.0, 1.0),
-      c.g,
-      1.0
-    );
+    fragColor = vec4(brailleCell(id, uBlack, uGamma) / 255.0, c.g, 0.0, 1.0);
     return;
   }
 
   vec4 f = cell(id);
 
-  float diskL = f.r;
-  float ring  = f.g;
-  float nameL = f.b;
-
-  // The photon ring is disk light wrapped a full turn, so it is brightest where
-  // the disk behind it is brightest. Adding it preserves that modulation;
-  // stamping a constant would draw a geometric circle.
-  // The ring is what draws the silhouette, and it matters MOST where the disk
-  // behind it is dark - which is exactly where the old (0.35 + 0.65*diskL)
-  // term throttled it to a third strength. Give it a floor of its own.
-  float L = clamp(diskL + nameL * (1.0 - diskL) + ring * (0.85 + 0.5 * diskL), 0.0, 1.0);
+  float L = clamp(f.r, 0.0, 1.0);
+  float accent = f.g;
 
   // --- Sobel in cell space ------------------------------------------------
   float tl = lum(id + vec2(-1.0,  1.0)), tc = lum(id + vec2(0.0,  1.0)), tr = lum(id + vec2(1.0,  1.0));
@@ -346,10 +250,10 @@ void main() {
   // what gives back real empty sky.
   float lp = pow(clamp((L - uBlack) / (1.0 - uBlack), 0.0, 1.0), uGamma);
 
-  // Ordered dither on the INDEX, suppressed on the ring so the ring never
-  // dithers. Buys ~2 perceived levels on the smooth haze for free.
+  // Ordered dither on the INDEX. Buys ~2 perceived levels on smooth gradients
+  // for free.
   int bi = int(mod(gl_FragCoord.x, 4.0)) + 4 * int(mod(gl_FragCoord.y, 4.0));
-  float dither = (BAYER[bi] / 16.0 - 0.5) * (1.0 - clamp(ring * 2.0, 0.0, 1.0));
+  float dither = BAYER[bi] / 16.0 - 0.5;
 
   float fidx = lp * (N - 1.0) + dither;
   float idx = clamp(floor(fidx + 0.5), 0.0, N - 1.0);
@@ -360,17 +264,13 @@ void main() {
   float prev = texture(uPrev, (id + 0.5) / uGrid).r * 255.0;
   if (uFirstFrame < 0.5 && prev < N && abs(fidx - prev) < uHysteresis) idx = prev;
 
-  // Ring core forced to the densest ramp glyph: unbroken, exactly one cell.
-  if (ring > 0.55) idx = N - 1.0;
-
   // Directional glyphs live past the ramp, addressed by index. Gated hard, or
   // the whole disk turns into slashes and it reads as a filter, not a render.
   float outIdx = idx;
-  if (mag > uEdgeThresh && ring < 0.4 && L > 0.06) outIdx = N + bin;
+  if (mag > uEdgeThresh && L > 0.06) outIdx = N + bin;
 
-  // R: glyph index. G: how much of this cell is the lensed headline.
-  // B: ring coverage, for the colour pass.
-  fragColor = vec4(outIdx / 255.0, clamp(nameL * 1.6, 0.0, 1.0), ring, 1.0);
+  // R: glyph index. G: accent mask, for the colour pass.
+  fragColor = vec4(outIdx / 255.0, accent, 0.0, 1.0);
 }
 `;
 

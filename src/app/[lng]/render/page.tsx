@@ -10,7 +10,7 @@ export async function generateMetadata({
   return {
     title: "render",
     description:
-      "How the ASCII black hole on this site is rendered: backwards Schwarzschild geodesics in a WebGL2 fragment shader, quantised to a 7x14px character lattice.",
+      "How the ASCII galaxy on this site is rendered: logarithmic spiral arms turning as a density wave, in a WebGL2 fragment shader rasterised into Braille sub-cells.",
     alternates: { canonical: `/${lng}/render` },
   };
 }
@@ -35,93 +35,90 @@ export default async function RenderPage({ params }: { params: Promise<{ lng: st
       <h1 className="text-display-2 text-ink-hi">render</h1>
       <p className="mt-3 max-w-[70ch] text-body text-dim">
         {t.nav.render === "render"
-          ? "How the field on the index page is computed. It is a backwards null-geodesic integrator in a WebGL2 fragment shader, quantised to a character lattice. Nothing here is a loop or a sprite."
-          : "Como o campo da página inicial é calculado. É um integrador de geodésicas nulas em um fragment shader WebGL2, quantizado para uma malha de caracteres. Nada aqui é um loop ou um sprite."}
+          ? "How the field on the index page is computed. A spiral galaxy in a WebGL2 fragment shader, rasterised into Braille sub-cells. The arms turn as a density wave. Nothing here is a loop or a pasted sprite."
+          : "Como o campo da página inicial é calculado. Uma galáxia espiral em um fragment shader WebGL2, rasterizada em sub-células Braille. Os braços giram como onda de densidade. Nada aqui é um loop ou um sprite colado."}
       </p>
 
       <div className="prose-terminal prose mt-12 dark:prose-invert">
-        <h2>The shadow is 2.598 r_s, not 1.0</h2>
+        <h2>The arms are a wave, not an object</h2>
         <p>
-          The single most common error in a hand-rolled black hole is drawing the black disk at the
-          event horizon, <code>r_s = 1</code>. What a distant observer actually sees is the{" "}
-          <em>apparent</em> shadow, whose radius is the critical impact parameter
+          A spiral galaxy&rsquo;s disk rotates differentially: the inner parts complete an orbit far
+          faster than the outer ones. If the arms were material, actual lanes of stars, differential
+          rotation would wind them into a tight coil within a couple of galactic rotations and every
+          spiral we can see would have stopped being one long ago. That is the <em>winding problem</em>.
         </p>
         <p>
-          <code>b_crit = 3√3/2 ≈ 2.598 r_s</code>
+          Lin and Shu resolved it in 1964: the arms are <strong>density waves</strong>. They are
+          regions of compression that disk material passes <em>through</em>, the way a traffic jam
+          persists on a motorway while individual cars enter and leave it. The pattern rotates
+          rigidly at a single constant <em>pattern speed</em>, independent of the orbital speed at
+          any radius.
         </p>
         <p>
-          Photons with <code>b &lt; b_crit</code> spiral in; photons with <code>b &gt; b_crit</code>{" "}
-          escape after winding some number of turns. Draw the disk at 1.0 and you get a dot with a
-          halo. Draw it at 2.598 and you get a black hole. The photon sphere itself sits at{" "}
-          <code>r = 1.5</code>, and the disk&rsquo;s inner edge (the ISCO) at <code>r = 3</code>.
-        </p>
-
-        <h2>Integrating the geodesic</h2>
-        <p>
-          Each cell fires one photon backwards from the camera. The acceleration is the Cartesian
-          Binet form,
-        </p>
-        <p>
-          <code>a = −(3/2) h² x / r⁵</code>
-        </p>
-        <p>
-          where <code>h²</code> is the conserved angular momentum. Two details matter more than the
-          rest:
-        </p>
-        <ul>
-          <li>
-            <strong>
-              <code>h²</code> is computed once, not per step.
-            </strong>{" "}
-            Because <code>a</code> is parallel to <code>x</code>, angular momentum is exactly
-            conserved. Recomputing it each step from a numerically drifting cross product makes the
-            photon ring visibly wobble.
-          </li>
-          <li>
-            <strong>Leapfrog, not Euler.</strong> At this step size Euler integration spirals
-            escaping rays into the hole and thickens the shadow by several cells. Kick-drift-kick
-            costs one extra acceleration evaluation and fixes it.
-          </li>
-        </ul>
-        <p>
-          A warning about a form you will find widely copied: <code>u″ = −u(1 − 1.5u²)</code>{" "}
-          expands to a photon sphere at <code>r = 1.2247</code>, not 1.5. The Cartesian form above
-          puts it where it belongs. Checking where your integrator places the photon sphere is a
-          decisive test of whether the physics is right.
+          That is both the physics and the only thing that survives a loop running for minutes.
+          Rotating the material would visibly wind the arms up while you watched. Here the arm phase
+          carries a rigid <code>&minus;t&middot;&Omega;</code> term so the arms stay permanently
+          open, while a separate noise field is advected at <code>&Omega;(r) &prop; 1/r</code> so the
+          clumping shears past the pattern. Both are true at once, which is the point.
         </p>
 
-        <h2>Real physics is cheaper than faking it here</h2>
+        <h2>Logarithmic spirals and pitch angle</h2>
         <p>
-          At 205×57 cells there are about 11,700 samples. At 2× supersampling that is ~47,000
-          fragments times 40 integration steps, roughly 1.9M iterations per frame. The same shader
-          at 5K costs on the order of 15M pixels times the step count. Quantising to a character
-          grid buys three orders of magnitude, so the usual argument for a procedural fake
-          evaporates: the budget goes to the glyph stage instead, which is where ASCII renders
-          actually live or die.
+          Real arms are close to logarithmic, which means a <strong>constant pitch angle</strong>:
+          the angle between the arm and a circle drawn through it is the same at every radius.
+        </p>
+        <p>
+          <code>&theta; = ln(r/a) / tan(p)</code>
+        </p>
+        <p>
+          Pitch angle is what separates the Hubble types. Sa through Sc average at or under 15.5
+          degrees, opening up toward later types. This one runs at <strong>19 degrees</strong>, in Sc
+          territory. That is a choice the medium forced rather than a physical one: tighter than
+          about 15 degrees and the arms drop below the resolution of the glyph grid and read as
+          concentric rings instead of a spiral.
         </p>
 
-        <h2>What survives quantisation</h2>
-        <p>Four features read at this resolution. Everything else is wasted work:</p>
-        <ul>
-          <li>the shadow silhouette</li>
-          <li>a one-cell photon ring</li>
-          <li>the left/right Doppler asymmetry</li>
-          <li>the lensed far-side arc over and under the shadow</li>
-        </ul>
+        <h2>Disk, bulge, and why the core is amber</h2>
         <p>
-          So there is no Kerr spin here (≤4% shadow flattening, invisible), no higher-order photon
-          subrings (sub-cell forever), and no per-pixel blackbody. The disk emission uses{" "}
-          <code>tprof²</code> rather than the bolometric <code>T⁴</code>, because <code>T⁴</code>{" "}
-          collapses to a single bright cell once you only have a dozen glyph levels. The beaming
-          exponent is 1.9 rather than the textbook 3+α for the same reason: at full strength the
-          receding limb falls below the ramp floor and disappears.
+          Surface brightness is the sum of two components. The disk is exponential,{" "}
+          <code>&Sigma;(R) = &Sigma;&#8320;&middot;exp(&minus;R/Rs)</code>, which is why the galaxy
+          fades smoothly instead of ending at an edge. The bulge is a S&eacute;rsic profile at{" "}
+          <code>n = 4</code>, the de Vaucouleurs case, far more centrally concentrated: it climbs
+          steeply enough that the nucleus saturates the ramp, which is correct.
         </p>
         <p>
-          Interstellar&apos;s team suppressed the Doppler asymmetry because test audiences found it
-          confusing. This does the opposite. At a dozen brightness levels the asymmetry is one of
-          the few cues that survives, and it is what makes the thing look computed rather than
-          looped.
+          The two colours are not decoration. Bulges really are red-yellow, being old stellar
+          populations long since done forming stars, and arms are blue-white because that is where
+          star formation is happening now and the brightest, shortest-lived stars sit. Tinting the
+          nucleus and the HII regions amber while the arms stay in ink is the astronomically correct
+          way to spend a two-colour palette.
         </p>
+        <p>
+          Dust lanes sit just <em>inside</em> the arms, on the leading edge of the wave where gas
+          piles up before it forms stars. That is a phase offset, not a separate texture.
+        </p>
+
+        <h2>Braille buys 8x the resolution</h2>
+        <p>
+          U+2800&ndash;28FF is a 2&times;4 dot matrix per character, so rendering into Braille rather
+          than a luminance ramp carries <strong>eight times</strong> the effective resolution on
+          exactly the same character grid: 80,360 addressable dots at 205&times;49 instead of 10,045
+          cells. The toggle in the hero readout flips between them.
+        </p>
+        <p>
+          It comes with a hard constraint. Departure Mono contains <strong>0 of the 256</strong>{" "}
+          Braille patterns, measured from its <code>cmap</code>; Commit Mono contains all 256. A
+          missing glyph does not fail loudly, it gets substituted by the fallback face at the
+          fallback&rsquo;s advance width, silently shearing the 7px lattice. So the Braille atlas is
+          built from Commit Mono and the builder refuses to run against a face lacking the block.
+        </p>
+        <p>
+          The threshold is <strong>interleaved gradient noise</strong>, not Bayer. An ordered 8&times;8
+          Bayer matrix aligns with the 2&times;4 cell structure and shows up as a hard four-column
+          repeat across the field. IGN has no periodic structure, and because it is still a pure
+          function of position it never shimmers between frames the way white noise would.
+        </p>
+
 
         <h2>The ramp is measured, not chosen</h2>
         <p>
@@ -132,8 +129,8 @@ export default async function RenderPage({ params }: { params: Promise<{ lng: st
           step and cause banding.
         </p>
         <p>
-          Index 0 is a literal space. The shadow has to be a hole in the text, not a dim glyph. That
-          one choice does more for recognisability than anything else in the pipeline.
+          Index 0 is a literal space. Empty sky has to be a hole in the text, not a dim glyph. That
+          one choice does more for legibility than anything else in the pipeline.
         </p>
 
         <h2>The cell is 7×14px, exactly</h2>
@@ -147,7 +144,7 @@ export default async function RenderPage({ params }: { params: Promise<{ lng: st
         </p>
         <p>
           The aspect ratio is also why the field has to be aspect-corrected before tracing. Skip it
-          and the photon ring renders as an ellipse. It is why the Sobel gradient is rescaled into
+          and a face-on galaxy renders as an ellipse. It is why the Sobel gradient is rescaled into
           cell space before <code>atan</code>, too: cells are 2:1 tall, so a <code>/</code>{" "}
           depicts a ~60° line on screen, not 45°.
         </p>
@@ -179,31 +176,6 @@ export default async function RenderPage({ params }: { params: Promise<{ lng: st
           a quantisation boundary flips glyph every single frame otherwise, which is the worst
           artifact animated ASCII has. Cells only leave their previous bin when the field moves more
           than 0.575 of a ramp step.
-        </p>
-
-        <h2>The headline is a sky plane</h2>
-        <p>
-          The name is rendered to a texture and placed on a plane behind the hole. Rays that escape
-          are projected onto it, so the headline bends around the shadow and a mirrored copy appears
-          inside the Einstein ring. It is the same integrator doing both jobs; the name is simply
-          what the background happens to be.
-        </p>
-
-        <h3>Prior art</h3>
-        <p>
-          This move is not original.{" "}
-          <a href="https://github.com/s0xDk/ghostty-blackhole" target="_blank" rel="noreferrer">
-            <code>s0xDk/ghostty-blackhole</code>
-          </a>{" "}
-          (May 2026) does Schwarzschild geodesics over terminal text including the lensed-text
-          trick, and{" "}
-          <a href="https://andrewd.ing/projects/O" target="_blank" rel="noreferrer">
-            Andrew Ding&apos;s ASCII Black Hole
-          </a>{" "}
-          (2025) is a particle-based take that predates it. Both are worth reading. What is
-          different here is the pipeline rather than the idea: a measured coverage ramp, cell-space
-          edge-aware glyph substitution, analytic ring coverage carried in its own channel, and
-          temporal hysteresis.
         </p>
 
         <h2>Degrading</h2>

@@ -11,7 +11,7 @@ import { getPostsMeta } from "@/lib/blog";
 
 async function staticFrame() {
   try {
-    return await readFile(join(process.cwd(), "public", "static", "blackhole.txt"), "utf8");
+    return await readFile(join(process.cwd(), "public", "static", "galaxy.txt"), "utf8");
   } catch {
     return "";
   }
@@ -73,7 +73,7 @@ export default async function IndexPage({ params }: { params: Promise<{ lng: str
         labels={{
           halt: t.ui.halt,
           resume: t.ui.resume_playback,
-          alt: t.ui.blackHoleAlt,
+          alt: t.ui.galaxyAlt,
           reducedMotionNote: t.ui.reducedMotionNote,
           copyEmail: t.ui.copyEmail,
           copied: t.ui.copied,

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { BlackHole } from "@/components/black-hole/black-hole";
+import { Galaxy } from "@/components/galaxy/galaxy";
 import { CopyEmail } from "@/components/chrome/copy-email";
 import type { Mode, Stats } from "@/lib/ascii/renderer";
 
@@ -44,12 +44,11 @@ export function Hero(props: Props) {
       className="relative left-1/2 w-screen -translate-x-1/2"
       style={{ minHeight: "clamp(520px, 82vh, 860px)" }}
     >
-      <BlackHole
+      <Galaxy
         staticFrame={props.staticFrame}
-        headline={props.name.toUpperCase()}
         centerX={narrow ? 0 : 0.92}
         centerY={narrow ? -0.78 : 0}
-        scale={narrow ? 13 : 9}
+        scale={narrow ? 3.4 : 2.5}
         mode={mode}
         onStats={setStats}
         labels={{
@@ -77,8 +76,8 @@ export function Hero(props: Props) {
         <div className="max-w-[54ch]">
           <p className="text-chrome text-amber">{props.tagline}</p>
 
-          {/* The single h1. The field behind draws this same name by projecting
-              escaped geodesics onto a sky plane, but pixels are not indexable
+          {/* The single h1. The field behind it is decorative and aria-hidden,
+              so the name has to exist as real text: pixels are not indexable
               and a screen reader cannot read a shader. */}
           <h1 className="mt-3 text-display-3 leading-[1.05] text-ink-hi lg:text-display-4">
             {props.name}
@@ -116,9 +115,9 @@ export function Hero(props: Props) {
           is computed rather than looped. */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0">
         <div className="mx-auto flex max-w-[min(100%-2rem,1280px)] flex-wrap items-center gap-x-4 gap-y-1 border-t border-rule bg-bg/95 px-2 py-2 pr-28 text-chrome text-dim backdrop-blur-[1px]">
-          <span aria-hidden="true">schwarzschild a=0</span>
+          <span aria-hidden="true">Sc spiral · m=2</span>
           <span aria-hidden="true" data-numeric>
-            b_crit 2.598 r_s
+            pitch 19°
           </span>
           {stats ? (
             <>

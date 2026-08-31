@@ -14,7 +14,6 @@ export type Mode = "ramp" | "braille";
 
 export type RendererOptions = {
   canvas: HTMLCanvasElement;
-  headline: string;
   fontFamily: string;
   /** Must contain U+2800-28FF. Departure Mono does not; Commit Mono does. */
   brailleFontFamily: string;
@@ -76,47 +75,8 @@ function makeTarget(gl: WebGL2RenderingContext, w: number, h: number, filter: nu
   return { tex, fbo, w, h };
 }
 
-/**
- * Renders the headline into a texture. This becomes the sky plane behind the
- * hole, so escaped geodesics project it: the name bends around the shadow and
- * a mirrored copy appears inside the Einstein ring.
- */
-function makeSkyTexture(gl: WebGL2RenderingContext, text: string, fontFamily: string) {
-  const W = 2048;
-  const H = 1024;
-  const c = document.createElement("canvas");
-  c.width = W;
-  c.height = H;
-  const ctx = c.getContext("2d")!;
-  ctx.fillStyle = "#000";
-  ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = "#fff";
-  ctx.textAlign = "left";
-  ctx.textBaseline = "middle";
-  // Two lines, set left of frame at roughly the size of the real <h1> beside
-  // it. The plane is mapped 1:1 onto the visible world extent, so an
-  // undeflected ray reproduces the name at true size and only rays passing
-  // near the hole bend it - which is the whole point.
-  const words = text.split(" ");
-  const lines = words.length > 2 ? [words.slice(0, 2).join(" "), words.slice(2).join(" ")] : [text];
-  const size = 96;
-  ctx.font = `${size}px ${fontFamily}`;
-  lines.forEach((line, i) => {
-    ctx.fillText(line, W * 0.045, H * 0.5 + (i - (lines.length - 1) / 2) * size * 1.15);
-  });
-
-  const tex = gl.createTexture()!;
-  gl.bindTexture(gl.TEXTURE_2D, tex);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, c);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  return tex;
-}
-
 export function createRenderer(opts: RendererOptions) {
-  const { canvas, headline, fontFamily, brailleFontFamily, onStats } = opts;
+  const { canvas, fontFamily, brailleFontFamily, onStats } = opts;
   let mode: Mode = opts.mode ?? "braille";
 
   const gl = canvas.getContext("webgl2", {
@@ -156,8 +116,6 @@ export function createRenderer(opts: RendererOptions) {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-  const skyTex = makeSkyTexture(gl, headline, fontFamily);
-
   const pField = program(gl, FIELD_FRAG);
   const pQuant = program(gl, QUANT_FRAG);
   const pGlyph = program(gl, GLYPH_FRAG);
@@ -176,13 +134,16 @@ export function createRenderer(opts: RendererOptions) {
   let opacity = 1;
 
   let time = 0;
-  // Fixed, looking down onto the disk from a little above its plane. The field
-  // does not follow the cursor: a background that swings around under the
-  // pointer reads as a toy, and it pulls the eye off the copy beside it.
-  const incl = 1.15;
+  // Fixed inclination, ~57 degrees off face-on: open enough to show the arms,
+  // tilted enough to read as a disk in space rather than a flat pinwheel. The
+  // field does not follow the cursor - a background that swings around under
+  // the pointer reads as a toy and pulls the eye off the copy beside it.
+  const incl = 1.0;
   let center: [number, number] = [0, 0];
   // r_s per half-grid-height. Lower = the hole fills more of the frame.
-  let scale = 9;
+  // Disk scale lengths per half-grid-height. The exponential disk is
+  // effectively gone by ~4 Rs, so this frames roughly that.
+  let scale = 2.5;
 
   // Braille resolves 8x more samples, so it shows far more of the field's low
 // end; it needs a higher black point and a steeper curve than the ramp to keep
@@ -237,11 +198,6 @@ let raf = 0;
     // would move at different speeds on 60Hz and 120Hz displays.
     time += dt;
 
-    // Sized to one row of the sampling grid, not one cell: in Braille the
-    // vertical resolution is 4x finer, so a cell-sized ring is four times
-    // thicker than the feature it is meant to draw.
-    const ringRows = mode === "braille" ? rows * 4 : rows;
-    const ringW = Math.max(1.0 * ((2 * scale) / ringRows), 0.02);
 
     // --- pass 1: the field
     gl.bindFramebuffer(gl.FRAMEBUFFER, field.fbo);
@@ -253,15 +209,7 @@ let raf = 0;
     gl.uniform1f(gl.getUniformLocation(pField, "uScale"), scale);
     gl.uniform1f(gl.getUniformLocation(pField, "uIncl"), incl);
     gl.uniform1f(gl.getUniformLocation(pField, "uTime"), time);
-    gl.uniform2f(gl.getUniformLocation(pField, "uParallax"), 0, 0);
     gl.uniform2f(gl.getUniformLocation(pField, "uCenter"), center[0], center[1]);
-    gl.uniform1i(gl.getUniformLocation(pField, "uSteps"), t.steps);
-    gl.uniform1f(gl.getUniformLocation(pField, "uRingW"), ringW);
-    gl.uniform1f(gl.getUniformLocation(pField, "uNameGain"), tune.nameGain);
-    gl.uniform1f(gl.getUniformLocation(pField, "uSkyZ"), tune.skyZ);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, skyTex);
-    gl.uniform1i(gl.getUniformLocation(pField, "uSky"), 0);
     gl.bindVertexArray(vao);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
@@ -420,7 +368,6 @@ let raf = 0;
         }
       }
       gl.deleteTexture(atlasTex);
-      gl.deleteTexture(skyTex);
       gl.deleteProgram(pField);
       gl.deleteProgram(pQuant);
       gl.deleteProgram(pGlyph);

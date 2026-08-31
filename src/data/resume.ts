@@ -84,7 +84,7 @@ export type Dictionary = {
     skipToContent: string;
     commandHint: string;
     reducedMotionNote: string;
-    blackHoleAlt: string;
+    galaxyAlt: string;
     backToIndex: string;
     readRender: string;
   };
@@ -125,8 +125,8 @@ export const CONTENT: Record<Locale, Dictionary> = {
       "en / pt",
       "departure mono 11px · commit mono 16/28",
       "cell 7x14px · aspect 0.500",
-      "schwarzschild a=0 · b_crit 2.598 r_s",
-      "40 geodesic steps, no readback",
+      "logarithmic spiral · pitch 19°",
+      "arms rotate as a density wave, not as material",
       "ramp measured at boot, never hand-ordered",
       "no analytics beyond page counts",
     ],
@@ -156,8 +156,8 @@ export const CONTENT: Record<Locale, Dictionary> = {
       commandHint: "press ⌘K",
       reducedMotionNote:
         "Reduced motion is on, so the field below is a single pre-rendered frame.",
-      blackHoleAlt:
-        "A Schwarzschild black hole rendered in ASCII: a black circular shadow ringed by a thin bright photon ring, with a lensed accretion disk arcing over and under it.",
+      galaxyAlt:
+        "A spiral galaxy rendered in Braille dot-art: a bright amber nucleus wrapped by two sweeping spiral arms over a speckled disk, tilted away from the viewer.",
       backToIndex: "back to index",
       readRender: "how this was rendered",
     },
@@ -265,11 +265,11 @@ export const CONTENT: Record<Locale, Dictionary> = {
         repo: "https://github.com/jravolio/Transcriber",
       },
       {
-        slug: "blackhole",
+        slug: "galaxy",
         name: "This page",
         year: "2026",
         blurb:
-          "A Schwarzschild geodesic integrator running in a WebGL2 fragment shader, quantised to a 7x14px character lattice. Written up in full.",
+          "A spiral galaxy computed in a WebGL2 fragment shader and rasterised into Braille sub-cells, eight dots per character. The arms rotate as a density wave. Written up in full.",
         stack: ["webgl2", "glsl", "typescript", "next.js"],
         live: "/render",
       },
@@ -308,8 +308,8 @@ export const CONTENT: Record<Locale, Dictionary> = {
       "en / pt",
       "departure mono 11px · commit mono 16/28",
       "célula 7x14px · proporção 0.500",
-      "schwarzschild a=0 · b_crit 2.598 r_s",
-      "40 passos geodésicos, sem readback",
+      "espiral logarítmica · pitch 19°",
+      "os braços giram como onda de densidade, não como matéria",
       "rampa medida no boot, nunca ordenada à mão",
       "sem analytics além de contagem de páginas",
     ],
@@ -339,8 +339,8 @@ export const CONTENT: Record<Locale, Dictionary> = {
       commandHint: "tecle ⌘K",
       reducedMotionNote:
         "Movimento reduzido está ativo, então o campo abaixo é um único quadro pré-renderizado.",
-      blackHoleAlt:
-        "Um buraco negro de Schwarzschild renderizado em ASCII: uma sombra circular preta cercada por um anel de fótons fino e brilhante, com um disco de acreção curvado por lente gravitacional passando por cima e por baixo.",
+      galaxyAlt:
+        "Uma galáxia espiral renderizada em arte de pontos Braille: um núcleo âmbar brilhante envolvido por dois braços espirais sobre um disco pontilhado, inclinado em relação ao observador.",
       backToIndex: "voltar ao início",
       readRender: "como isto foi renderizado",
     },
@@ -448,11 +448,11 @@ export const CONTENT: Record<Locale, Dictionary> = {
         repo: "https://github.com/jravolio/Transcriber",
       },
       {
-        slug: "blackhole",
+        slug: "galaxy",
         name: "Esta página",
         year: "2026",
         blurb:
-          "Um integrador de geodésicas de Schwarzschild rodando em um fragment shader WebGL2, quantizado para uma malha de caracteres de 7x14px. Documentado por inteiro.",
+          "Uma galáxia espiral calculada em um fragment shader WebGL2 e rasterizada em sub-células Braille, oito pontos por caractere. Os braços giram como uma onda de densidade. Documentado por inteiro.",
         stack: ["webgl2", "glsl", "typescript", "next.js"],
         live: "/render",
       },

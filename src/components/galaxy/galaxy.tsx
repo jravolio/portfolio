@@ -7,7 +7,6 @@ import { createRenderer, type Mode, type Renderer, type Stats } from "@/lib/asci
 type Props = {
   /** The baked frame, inlined by the server. First paint, and the fallback. */
   staticFrame: string;
-  headline: string;
   labels: { halt: string; resume: string; alt: string; reducedMotionNote: string };
   mode?: Mode;
   /** Where the hole sits, in normalised screen units. Right of centre by default. */
@@ -29,13 +28,12 @@ function resolveColor(cssColor: string, fallback: string): [number, number, numb
   return [d[0]! / 255, d[1]! / 255, d[2]! / 255];
 }
 
-export function BlackHole({
+export function Galaxy({
   staticFrame,
-  headline,
   labels,
   centerX = 0.42,
   centerY = 0,
-  scale = 9,
+  scale = 2.5,
   mode = "braille",
   onStats,
 }: Props) {
@@ -69,7 +67,6 @@ export function BlackHole({
     try {
       r = createRenderer({
         canvas,
-        headline,
         fontFamily:
           getComputedStyle(document.documentElement).getPropertyValue("--font-departure").trim() ||
           "monospace",
@@ -137,7 +134,7 @@ export function BlackHole({
     // effect below swaps it live. Including it here would tear down and rebuild
     // the WebGL context on every toggle.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reduced, headline, syncColors, centerX, centerY, scale, onStats]);
+  }, [reduced, syncColors, centerX, centerY, scale, onStats]);
 
   // Swapping the atlas and rebuilding the field target is cheap; recreating the
   // WebGL context is not, so this lives outside the effect above.

@@ -1,7 +1,7 @@
 # ARCHITECTURE
 
 A text-mode portfolio. Every surface resolves to a character lattice, and the hero is a
-real Schwarzschild geodesic integrator rather than a picture of one.
+computed spiral galaxy rather than a picture of one.
 
 ## Stack
 
@@ -47,7 +47,7 @@ src/
     blog.ts shiki-theme.ts i18n.ts utils.ts
   hooks/
   proxy.ts                locale redirect (was middleware.ts before Next 16)
-scripts/bake-blackhole.mjs  build-time CPU renderer -> the static fallback
+scripts/bake-galaxy.mjs  build-time CPU renderer -> the static fallback
 ```
 
 ## The lattice
@@ -69,36 +69,31 @@ Everything derives from that:
 Three passes, no readback. `gl.readPixels` on the frame you just drew forces a GPU→CPU
 sync stall.
 
-1. **Field** (`FIELD_FRAG`) — backwards null-geodesic integration at 2× the cell grid.
-   Cartesian Binet form `a = −(3/2)h²x/r⁵`, leapfrog integration, `h²` computed once.
-   Outputs disk luminance, analytic ring coverage, and the lensed headline in RGB.
+1. **Field** (`FIELD_FRAG`) — the galaxy, evaluated per supersample. Exponential disk,
+   de Vaucouleurs (Sersic n=4) bulge, logarithmic spiral arms. Outputs luminance in R and
+   an accent mask in G.
 2. **Quantise** (`QUANT_FRAG`) — box-downsample to the cell grid, Sobel in *cell* space
-   for directional glyphs, 4×4 Bayer dither on the ramp index, temporal hysteresis against
-   the previous frame via ping-pong FBOs.
+   for directional glyphs, dither, temporal hysteresis via ping-pong FBOs.
 3. **Composite** (`GLYPH_FRAG`) — one quad sampling a NEAREST glyph atlas.
 
-Physics constants live in `shaders.ts`; the CPU twin in `scripts/bake-blackhole.mjs` uses
-the same maths and is parameterised by `BH_*` env vars for tuning. Keep the two in parity.
+### The arms are a density wave, not material
 
-The beaming exponent is **3.0**, near the textbook 3+alpha. It was detuned to 1.9 to keep the
-receding limb above the ramp floor, and that flattened the one cue that makes the shadow legible:
-at 3.0 the approaching side throws a bright crescent right against the shadow, and the silhouette
-reads instantly.
+A disk rotates differentially, so **material** arms would wind into a coil within a couple
+of galactic rotations — the winding problem. Lin & Shu (1964) resolved it: arms are density
+waves that material passes *through*, and the pattern rotates rigidly at a single pattern
+speed. So the arm phase carries a rigid `−t·Ω` term while a separate noise field is
+advected at `Ω(r) ∝ 1/r`. That is both the physics and the only thing that survives a
+long-running loop: rotating the material would visibly wind the arms up on screen.
 
-The viewing angle is **1.15 rad**, fixed: looking down onto the disk from a little above
-its plane, so you see its top surface and the lensed far side arcing over the shadow.
+Arms are logarithmic, `θ = ln(r/a)/tan(p)`, at a **19° pitch angle**. Sa–Sc average at or
+under 15.5°; 19° is Sc territory, chosen because tighter than ~15° the arms fall below the
+glyph resolution and read as concentric rings.
 
-The projection is **orthographic**. A perspective camera was built and removed: at a few
-thousand glyphs the extra depth cue does not survive quantisation, and the diverging rays
-smear the disk's faint outer halo into fog across the whole frame.
+The amber nucleus is not a palette choice: bulges genuinely are red-yellow (old stellar
+populations) and arms blue-white (young hot stars).
 
-The field **does not track the cursor**. An earlier version mapped pointer position to the
-viewing angle; it read as a toy and pulled the eye off the copy sitting next to it.
-
-The quantiser applies a **black point before gamma**. The photographic `1/2.2` curve lifts
-darks, which on a bright-object-against-empty-sky image is exactly wrong: it turns the
-disk's outer falloff into haze everywhere. Subtracting a floor first is what gives back
-real empty sky.
+Physics constants live in `shaders.ts`; the CPU twin in `scripts/bake-galaxy.mjs` uses the
+same maths and is parameterised by `GX_*` env vars. Keep the two in parity.
 
 ### Braille sub-cell rasterisation
 
@@ -160,7 +155,7 @@ advance width and silently breaks the 7px lattice.
 | 3 | 110 cols | 20 | 1× | coarse pointer |
 | — | 148×46 | static | — | reduced motion, no JS, no WebGL |
 
-The static tier is `public/static/blackhole.txt`, produced at build time by
+The static tier is `public/static/galaxy.txt`, produced at build time by
 `pnpm run bake` and inlined as **one `<pre>` with one text node**. It is the first paint,
 the no-JS fallback and the reduced-motion state. The homepage ships 212 DOM elements
 against Lighthouse's 800-element warning threshold; one span per cell would be ~6,800.
@@ -220,5 +215,5 @@ pnpm lint
 pnpm typecheck
 ```
 
-Tuning the black hole: `BH_INCL=1.25 BH_EMIT=1.8 BH_SCALE=10.5 node scripts/bake-blackhole.mjs`
+Tuning the galaxy: `GX_PITCH=0.331 GX_SCALE=2.5 GX_INCL=1.0 node scripts/bake-galaxy.mjs`
 prints to stdout. In the browser, `window.__bh` exposes the live tunables.

@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "bake": "node scripts/bake-blackhole.mjs"
+    "bake": "node scripts/bake-galaxy.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",

@@ -78,7 +78,7 @@ Things this site must not resemble:
    real semantic HTML that a screen reader, a scraper, and Google all parse correctly.
    Turning off JavaScript, or turning on reduced-motion, must leave a site that still
    reads and still impresses.
-4. **One dominant spectacle.** The black hole is the centerpiece. Everything else is
+4. **One dominant spectacle.** The galaxy is the centerpiece. Everything else is
    quieter on purpose. Layering five extraordinary moments produces noise, not awe.
 5. **Never lie about the work.** All content is sourced from the LinkedIn resume of
    record. No invented metrics, no invented clients.

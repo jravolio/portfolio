@@ -1,8 +1,8 @@
 # devjravolio.com
 
 Personal site for Julio Cesar Avolio. A text-mode portfolio: everything resolves to a
-7×14px character lattice, and the hero is a Schwarzschild geodesic integrator running in a
-WebGL2 fragment shader, quantised to ASCII.
+7×14px character lattice, and the hero is a spiral galaxy computed in a WebGL2 fragment
+shader and rasterised into Braille sub-cells.
 
 The `/render` page explains how it works and credits the prior art.
 
@@ -15,7 +15,7 @@ pnpm dev
 |---|---|
 | `pnpm dev` | dev server |
 | `pnpm build` | bake the fallback frame, then build |
-| `pnpm bake` | regenerate `public/static/blackhole.txt` |
+| `pnpm bake` | regenerate `public/static/galaxy.txt` |
 | `pnpm lint` / `pnpm typecheck` | verification |
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — stack, renderer, layout, gotchas

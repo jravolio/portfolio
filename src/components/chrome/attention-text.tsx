@@ -6,7 +6,7 @@ import { RAMP_POOL } from "@/lib/ascii/atlas";
 /**
  * The one heading on the page allowed to draw attention to itself.
  *
- * It resolves through the SAME glyph set the black hole is quantised to, so the
+ * It resolves through the SAME glyph set the field is quantised to, so the
  * word settles out of the alphabet the field is drawn from rather than arriving
  * from nowhere.
  *
