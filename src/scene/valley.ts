@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { poseAt, STOP_IDS } from "./path";
-import { BAT_VERT, GEOMETRY_FRAG, GEOMETRY_VERT, INK_FRAG, INK_VERT } from "./shaders";
+import { BAT_VERT, GEOMETRY_FRAG, GEOMETRY_VERT, GRAIN_FRAG, INK_FRAG, INK_VERT } from "./shaders";
 import { sstep } from "./terrain";
 import { INK, PALETTE } from "./ink";
 import { BRIDGE, MOON, SCRIBE, TOWER_TOP, WATCH } from "./landmarks";
@@ -70,7 +70,7 @@ export function createValley(canvas: HTMLCanvasElement, kit: Kit) {
 
   const bats = new THREE.Mesh(world.bats, batMaterial);
   bats.frustumCulled = false;
-  world.pines.material = instanced;
+  for (const tile of world.pines) tile.material = instanced;
   world.wheel.material = plain;
   world.lord.body.material = plain;
   world.lord.head.material = plain;
@@ -78,7 +78,7 @@ export function createValley(canvas: HTMLCanvasElement, kit: Kit) {
     new THREE.Mesh(world.terrain, plain),
     new THREE.Mesh(world.buildings, plain),
     new THREE.Mesh(world.backdrop, plain),
-    world.pines,
+    ...world.pines,
     world.wheel,
     world.lord.group,
     bats,
@@ -93,10 +93,18 @@ export function createValley(canvas: HTMLCanvasElement, kit: Kit) {
     depthTexture: new THREE.DepthTexture(2, 2),
   });
 
+  const grainTarget = new THREE.WebGLRenderTarget(2, 2, {
+    format: THREE.RGFormat,
+    minFilter: THREE.NearestFilter,
+    magFilter: THREE.NearestFilter,
+    depthBuffer: false,
+  });
+
   const ink = {
     tData: { value: target.textures[0] },
     tNormal: { value: target.textures[1] },
     tDepth: { value: target.depthTexture },
+    tGrain: { value: grainTarget.texture },
     uRes: { value: new THREE.Vector2(2, 2) },
     uScale: { value: 1 },
     uTime: { value: 0 },
@@ -140,6 +148,23 @@ export function createValley(canvas: HTMLCanvasElement, kit: Kit) {
   inkQuad.frustumCulled = false;
   inkScene.add(inkQuad);
 
+  const grainMaterial = new THREE.RawShaderMaterial({
+    glslVersion: THREE.GLSL3,
+    vertexShader: INK_VERT,
+    fragmentShader: GRAIN_FRAG,
+    uniforms: { uRes: ink.uRes, uScale: ink.uScale },
+    depthTest: false,
+    depthWrite: false,
+  });
+
+  function bakeGrain() {
+    inkScene.overrideMaterial = grainMaterial;
+    renderer.setRenderTarget(grainTarget);
+    renderer.render(inkScene, inkCamera);
+    renderer.setRenderTarget(null);
+    inkScene.overrideMaterial = null;
+  }
+
   const still = window.matchMedia("(prefers-reduced-motion: reduce)");
 
   let tops: number[] = [];
@@ -170,6 +195,8 @@ export function createValley(canvas: HTMLCanvasElement, kit: Kit) {
       ink.uRes.value.copy(size);
       ink.uScale.value = scale;
       camera.aspect = w / h;
+      grainTarget.setSize(size.x, size.y);
+      bakeGrain();
     }
     dirty = true;
     sections = STOP_IDS.map((id) => {
@@ -277,6 +304,11 @@ export function createValley(canvas: HTMLCanvasElement, kit: Kit) {
     renderer.render(inkScene, inkCamera);
   }
 
+  function onContextRestored() {
+    bakeGrain();
+    dirty = true;
+  }
+
   function onVisibility() {
     cancelAnimationFrame(frame);
     if (!document.hidden) {
@@ -290,6 +322,8 @@ export function createValley(canvas: HTMLCanvasElement, kit: Kit) {
   const resizer = new ResizeObserver(measure);
   resizer.observe(document.body);
   window.addEventListener("resize", measure);
+  // The renderer registers its own restore handler when it is created, above, so this one runs after it.
+  canvas.addEventListener("webglcontextrestored", onContextRestored);
   document.addEventListener("visibilitychange", onVisibility);
   frame = requestAnimationFrame(render);
 
@@ -297,6 +331,7 @@ export function createValley(canvas: HTMLCanvasElement, kit: Kit) {
     cancelAnimationFrame(frame);
     resizer.disconnect();
     window.removeEventListener("resize", measure);
+    canvas.removeEventListener("webglcontextrestored", onContextRestored);
     document.removeEventListener("visibilitychange", onVisibility);
     for (const root of [scene, inkScene]) {
       root.traverse((object) => {
@@ -304,8 +339,9 @@ export function createValley(canvas: HTMLCanvasElement, kit: Kit) {
         if (object instanceof THREE.Mesh) object.geometry.dispose();
       });
     }
-    for (const m of [plain, instanced, batMaterial, inkQuad.material]) m.dispose();
+    for (const m of [plain, instanced, batMaterial, inkQuad.material, grainMaterial]) m.dispose();
     target.dispose();
+    grainTarget.dispose();
     renderer.dispose();
   };
 }

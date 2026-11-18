@@ -41,7 +41,8 @@ src/
     walkers.ts              the people: limb rigs, routes, walk cycle
     kit.ts kit-manifest.json  decoder and index for the baked kit models
     path.ts                 camera stops and the spline through them
-    shaders.ts ink.ts       the two passes and the palette
+    shaders.ts ink.ts       the geometry, ink and grain shaders, and the palette
+    tiles.ts                groups the pines into tiles, one mesh each, so they can be culled
     valley.ts               renderer, scroll mapping, frame loop
 ```
 
@@ -105,6 +106,51 @@ Line boil comes from quantising time: the UV wobble and the hatch offsets use
 Object ids are what make details draw: two parts with different ids get an outline between
 them even when coplanar, so a timber beam or a window bar is a thin box with its own id.
 
+### Paper grain
+
+Paper grain depends only on the pixel position, so it is not computed in the ink pass. A
+one-off pass (the ink quad drawn with `GRAIN_FRAG` through `overrideMaterial`) bakes it into
+an RG8 texture the size of the drawing buffer, with the value split over two 8-bit channels
+so the error is under a thousandth of a level. It is redone when the size or pixel ratio
+changes and after a WebGL context restore, which leaves the texture empty; the ink pass reads
+one texel. The weights and the pack and unpack formulas live once, in `GRAIN_CODEC` in
+`shaders.ts`.
+
+A mask that lets the ink pass skip the window-glow loop (16 fetches) was tried and
+dropped: the loop runs on only 1 to 4% of pixels, but the two extra passes the mask needs
+cost more than the whole loop (paired frame times on an M3 Pro: slower with the mask at 7 of
+9 stops, median 10%; 3 to 13% faster with no glow loop at all).
+
+### Memory
+
+At 1440x900 and a pixel ratio of 1.75 (2520x1575, 3.97 million pixels):
+
+| Target | Bytes per pixel | Size |
+|---|---|---|
+| Geometry colour attachments (two RGBA8) | 8 | 31.8 MB |
+| Geometry depth texture (24-bit, stored as 4 bytes) | 4 | 15.9 MB |
+| Baked paper grain (RG8) | 2 | 7.9 MB |
+
+### Pines
+
+The 1,500 pines are grouped into an 8x8 grid of tiles (`groupByTile`, `tileMeshes`), one
+`InstancedMesh` each, so three culls whole tiles against the camera. Counted over the whole
+geometry pass (terrain, buildings and people included), the mean of the nine stops falls from
+2.01 million vertices a frame to 0.99 million (49%). It is 27% at the seat and 33% at the
+study, and the worst stops barely gain: about 80% at `swarm` and 78% at `gate`, which look
+over the valley. The pines alone are 1.51 million of the 2.01 million. Draw calls rise by about
+10 a frame on average (23 at `gate`). A tile's instances keep their index from before the
+split in the `aPine` attribute, because the vertex shader offsets each pine's object id by it:
+change that index and the outlines between neighbouring pines change with it. Tiles share
+one set of vertex buffers.
+
+The picture is not bit-identical to the version before the split. Two pines that overlap at the
+same 24-bit depth are decided by draw order, which the split changes, so an ink line between
+them can move by a pixel: isolated pairs of adjacent pixels, up to 28 levels apart in the
+worst measured case. The 16-bit grain differs from the per-pixel noise by one level on about
+0.05% of pixels. Expect a few hundred differing pixels in a before and after diff of a stop,
+and look at where they are before dismissing them.
+
 ### Material classes
 
 `classes.mjs` is the one place class ids are defined. `world.ts`, `shaders.ts` and
@@ -130,7 +176,9 @@ On a portrait screen it aims below the subject instead, so the subject sits abov
 ## Gotchas
 
 - `RawShaderMaterial` does not get three's `USE_INSTANCING` define. The pines use a second
-  material built with `defines: { INSTANCED: 1 }`.
+  material built with `defines: { INSTANCED: 1 }`, and that path needs two things on the mesh:
+  `instanceMatrix` and the `aPine` attribute (`tileMeshes` adds it). An instanced mesh on that
+  material without `aPine` reads 0 for every instance and loses its per-instance outlines.
 - Colours are passed to the ink pass as raw sRGB vectors, not `THREE.Color`, because the
   pass writes straight to the canvas with no colour-space conversion.
 - Everything scattered (houses, trees) checks `occupied`, a list of footprints for the
