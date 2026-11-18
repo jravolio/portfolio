@@ -11,6 +11,15 @@
   --card-ink: #17130f;
   --card-accent: #8a1c1c;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ink-curtain:
+    repeating-linear-gradient(118deg, transparent 0 7px, color-mix(in srgb, var(--fg) 4%, transparent) 7px 8px),
+    rgb(var(--sheet) / 0.94);
+  --card-w: 10rem;
+  --place-gap: 1.5rem;
+  --sheet-w: 34rem;
+  --ink-rule: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='6' viewBox='0 0 400 6' preserveAspectRatio='none'%3E%3Cpath d='M0 3 C 50 1, 100 5, 160 3 S 260 1, 320 3 S 380 5, 400 3' stroke='black' stroke-width='1.6' fill='none'/%3E%3C/svg%3E");
+  --ink-margin: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='400' viewBox='0 0 6 400' preserveAspectRatio='none'%3E%3Cpath d='M3 0 C 1 40, 5 80, 3 120 S 1 200, 3 240 S 5 320, 3 400' stroke='black' stroke-width='1.6' fill='none'/%3E%3C/svg%3E");
+  --ink-tick: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='6' viewBox='0 0 24 6' preserveAspectRatio='none'%3E%3Cpath d='M0 3.2 C 8 2.4, 16 3.8, 24 2.8' stroke='black' stroke-width='2' fill='none'/%3E%3C/svg%3E");
 }
 
 html {
@@ -109,7 +118,8 @@ main {
   min-height: 100svh;
   display: flex;
   align-items: center;
-  padding: clamp(1rem, 3.5vw, 4rem);
+  --pin-pad: clamp(1rem, 3.5vw, 4rem);
+  padding: var(--pin-pad);
   opacity: var(--presence, 1);
   transform: translateY(calc((1 - var(--presence, 1)) * 1.25rem));
 }
@@ -121,6 +131,31 @@ main {
 
 .stop[data-away] .pin {
   pointer-events: none;
+}
+
+@media (min-width: 48rem) {
+  .pin:has(.sheet)::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: -1;
+    width: min(58rem, 100%);
+    background: var(--ink-curtain);
+    mask-image: linear-gradient(to right, #000 84%, transparent);
+    pointer-events: none;
+  }
+}
+
+@media (min-width: 64rem) {
+  .pin:has(.sheet)::after {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 calc(var(--pin-pad) + var(--card-w) + 2 * var(--place-gap) + var(--sheet-w));
+    width: 6px;
+    background: color-mix(in srgb, var(--fg) 45%, transparent);
+    mask: var(--ink-margin) center / 100% 100% no-repeat;
+    pointer-events: none;
+  }
 }
 
 .plain-button {
@@ -220,20 +255,15 @@ h1 {
 
 .place {
   display: grid;
-  grid-template-columns: 10rem minmax(0, 34rem);
-  gap: 1.5rem;
+  grid-template-columns: var(--card-w) minmax(0, var(--sheet-w));
+  gap: var(--place-gap);
   align-items: start;
 }
 
 .sheet {
   position: relative;
-  max-width: 34rem;
+  max-width: var(--sheet-w);
   padding: 1.5rem;
-  border: 1.5px solid rgb(236 230 212 / 0.62);
-  outline: 1px solid rgb(236 230 212 / 0.22);
-  outline-offset: 4px;
-  border-radius: 2px;
-  background: rgb(var(--sheet) / 0.88);
 }
 
 .sheet-wide {
@@ -241,9 +271,19 @@ h1 {
 }
 
 .band + .band {
+  position: relative;
   margin-top: 1.5rem;
   padding-top: 1.5rem;
-  border-top: 1px solid var(--rule);
+}
+
+.band + .band::before,
+.steps li::after {
+  content: "";
+  position: absolute;
+  inset: -3px 0 auto;
+  height: 6px;
+  background: var(--rule);
+  mask: var(--ink-rule) center / 100% 100% no-repeat;
 }
 
 .sheet-head {
@@ -301,11 +341,11 @@ h1 {
 }
 
 .steps li {
+  position: relative;
   counter-increment: step;
   display: grid;
   grid-template-columns: 2rem minmax(0, 1fr);
   padding: 0.5rem 0;
-  border-top: 1px solid var(--rule);
 }
 
 .steps li::before {
@@ -703,13 +743,6 @@ h1 {
   z-index: 5;
   transform: translateY(-50%);
   display: none;
-  width: 13rem;
-  max-height: calc(100svh - 2rem);
-  overflow-y: auto;
-  padding: 1rem;
-  border: 1px solid var(--rule);
-  border-radius: 2px;
-  background: rgb(var(--sheet) / 0.8);
 }
 
 @media (min-width: 72rem) {
@@ -718,28 +751,36 @@ h1 {
   }
 }
 
+.place-index::before {
+  content: "";
+  position: absolute;
+  inset: -2.5rem -2.5rem -2.5rem -4rem;
+  z-index: -1;
+  background: radial-gradient(closest-side, rgb(var(--sheet) / 0.9) 60%, rgb(var(--sheet) / 0) 100%);
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+  pointer-events: none;
+}
+
 .index-group + .index-group {
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--rule);
+  margin-top: 0.5rem;
 }
 
 .index-group p {
   font-size: 0.875rem;
   font-style: italic;
   line-height: 1.25;
+  text-align: right;
   color: var(--muted);
-}
-
-.place-index ol {
-  margin: 0.25rem 0 0;
+  opacity: 0;
+  transition: opacity 160ms ease-out;
 }
 
 .place-index a {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.5rem;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
   padding: 0.125rem 0;
   font-size: 1rem;
   font-weight: 500;
@@ -747,25 +788,91 @@ h1 {
   text-decoration: none;
   color: var(--fg);
   opacity: 0.78;
+  text-shadow:
+    0 0 0.75rem rgb(var(--sheet)),
+    0 0 0.25rem rgb(var(--sheet));
   transition:
     opacity 160ms ease-out,
     color 160ms ease-out;
 }
 
+.place-index a > span {
+  opacity: 0;
+  transform: translateX(0.5rem);
+  transition:
+    opacity 160ms ease-out,
+    transform 200ms var(--ease-out);
+}
+
 .place-index small {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
   font-size: 0.875rem;
   font-weight: 400;
   color: var(--muted);
   white-space: nowrap;
 }
 
-.place-index a:hover {
-  opacity: 1;
+.place-index a::after {
+  content: "";
+  flex: none;
+  width: 1.25rem;
+  height: 6px;
+  background: currentColor;
+  mask: var(--ink-tick) center / 100% 100% no-repeat;
+  transition: width 200ms var(--ease-out);
 }
 
 .place-index a[aria-current] {
   opacity: 1;
   color: var(--accent);
+}
+
+.place-index a[aria-current]::after {
+  width: 2rem;
+}
+
+.place-index a[aria-current] > span,
+.place-index:focus-within a > span {
+  opacity: 1;
+  transform: none;
+}
+
+.place-index:focus-within::before,
+.place-index:focus-within .index-group p {
+  opacity: 1;
+}
+
+.place-index:focus-within small {
+  position: static;
+  width: auto;
+  height: auto;
+  clip-path: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .place-index:hover::before,
+  .place-index:hover .index-group p {
+    opacity: 1;
+  }
+
+  .place-index:hover a > span {
+    opacity: 1;
+    transform: none;
+  }
+
+  .place-index:hover small {
+    position: static;
+    width: auto;
+    height: auto;
+    clip-path: none;
+  }
+
+  .place-index a:hover {
+    opacity: 1;
+  }
 }
 
 @media (max-width: 47.99rem) {
@@ -776,6 +883,17 @@ h1 {
   .pin {
     align-items: flex-end;
     padding-bottom: 1rem;
+  }
+
+  .sheet::before {
+    content: "";
+    position: absolute;
+    inset: -5rem auto -1rem calc(-1 * var(--pin-pad));
+    z-index: -1;
+    width: 100vw;
+    background: var(--ink-curtain);
+    mask-image: linear-gradient(to bottom, transparent, #000 5rem);
+    pointer-events: none;
   }
 
   .place {
@@ -858,7 +976,8 @@ h1 {
   .relic,
   .relic[aria-selected="true"],
   .reading,
-  .plain-button:active {
+  .plain-button:active,
+  .place-index a > span {
     transform: none;
   }
 
