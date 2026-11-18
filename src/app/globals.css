@@ -1,428 +1,875 @@
 @import "tailwindcss";
-@import "tw-animate-css";
-
-@plugin "@tailwindcss/typography";
-
-@custom-variant dark (&:where(.dark, .dark *));
-
-/* ==========================================================================
-   TOKENS
-
-   Two output devices, one document.
-
-   LIGHT is the default: continuous-feed dot-matrix paper. Ink on stock,
-   subtractive, does not glow.
-   DARK is the instrument: amber phosphor emission over cool CRT glass. The
-   warm/cool opposition is what makes amber read as glowing rather than
-   merely orange.
-
-   Every text token below was verified against its own background: all pass
-   WCAG AA (>=4.5:1) and all resolve inside the sRGB gamut.
-   ========================================================================== */
 
 :root {
-  /* --- paper ------------------------------------------------------------ */
-  --bg: oklch(97.5% 0.018 95); /* #FAF7EA  stock            */
-  --bg-inset: oklch(94.5% 0.022 95); /* #F1EDDD  1.09            */
-  --rule: oklch(84.5% 0.024 95); /* #D1CCBB  1.49            */
-  --dim: oklch(50% 0.03 70); /* #6F6151   5.62:1         */
-  --text: oklch(25% 0.03 70); /* #2B1F11  14.96:1  ribbon */
-  --ink-hi: oklch(17% 0.028 70); /* #170D03  17.85:1         */
-  --amber: oklch(52% 0.118 62); /* #985704   5.31:1  ribbon 2 */
-  --cyan: oklch(48% 0.086 220); /* #05687F   5.91:1  links  */
-  --hot: oklch(50% 0.17 27); /* #B02B27   6.10:1  errata */
-
-  /* Paper does not glow. Refusing the bloom is the discipline that sells it. */
-  --glow: 0 0 0 transparent;
-  --grille-opacity: 0;
-
-  /* --- the lattice ------------------------------------------------------ */
-  /* Departure Mono: unitsPerEm 550, advance 350. At 11px that is exactly
-     7.000px advance and a 14.000px line box. Aspect exactly 0.5. Measured,
-     not assumed. Every dimension on this site is a multiple of these. */
-  --cell-w: 7px;
-  --cell-h: 14px;
-  --cell-aspect: 0.5;
-
-  --radius: 0px;
+  --ground: #0d1220;
+  --fg: #ece6d4;
+  --muted: #b4b7c6;
+  --accent: #f3b755;
+  --sheet: 11 14 23;
+  --rule: rgb(236 230 212 / 0.3);
+  --card-paper: #e9e1c9;
+  --card-ink: #17130f;
+  --card-accent: #8a1c1c;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
-.dark {
-  --bg: oklch(18% 0.012 200); /* #0B1314  cold unlit phosphor */
-  --bg-inset: oklch(23.5% 0.014 200); /* #162021  1.13            */
-  --rule: oklch(30% 0.014 200); /* #263031  1.38            */
-  --dim: oklch(62% 0.03 85); /* #8E8572   5.15:1         */
-  --text: oklch(88% 0.045 85); /* #E5D6B6  13.06:1         */
-  --ink-hi: oklch(96% 0.03 85); /*          bright emission */
-  --amber: oklch(84% 0.17 84); /* #FEBF12  11.34:1  P3 phosphor box */
-  --cyan: oklch(84% 0.11 200); /* #65E0E7  11.96:1  IBM 5153 c11   */
-  --hot: oklch(64% 0.17 25); /* #E15955   5.15:1  IBM 5153 c12   */
-
-  --glow: 0 0 12px color-mix(in oklch, var(--amber) 22%, transparent);
-  --grille-opacity: 0.055;
+html {
+  background: var(--ground);
+  color: var(--fg);
+  font-family: var(--font-text);
+  font-size: 100%;
+  scroll-behavior: smooth;
 }
 
-@theme inline {
-  --color-bg: var(--bg);
-  --color-bg-inset: var(--bg-inset);
-  --color-rule: var(--rule);
-  --color-dim: var(--dim);
-  --color-text: var(--text);
-  --color-ink-hi: var(--ink-hi);
-  --color-amber: var(--amber);
-  --color-cyan: var(--cyan);
-  --color-hot: var(--hot);
-
-  /* shadcn primitives mapped onto the two-device palette so its components
-     inherit the grid instead of importing a second, softer design system. */
-  --color-background: var(--bg);
-  --color-foreground: var(--text);
-  --color-card: var(--bg-inset);
-  --color-card-foreground: var(--text);
-  --color-popover: var(--bg-inset);
-  --color-popover-foreground: var(--text);
-  --color-primary: var(--amber);
-  --color-primary-foreground: var(--bg);
-  --color-secondary: var(--bg-inset);
-  --color-secondary-foreground: var(--text);
-  --color-muted: var(--bg-inset);
-  --color-muted-foreground: var(--dim);
-  --color-accent: var(--bg-inset);
-  --color-accent-foreground: var(--amber);
-  --color-destructive: var(--hot);
-  --color-destructive-foreground: var(--bg);
-  --color-border: var(--rule);
-  --color-input: var(--rule);
-  --color-ring: var(--amber);
-
-  --font-departure: var(--font-departure), ui-monospace, monospace;
-  --font-commit: var(--font-commit), ui-monospace, monospace;
-
-  /* Spacing is one cell column. p-2 = 14px = one cell row. Nothing on this
-     site is spaced on Tailwind's 4px scale; that would break the lattice. */
-  --spacing: 7px;
-
-  --radius-sm: 0px;
-  --radius-md: 0px;
-  --radius-lg: 0px;
-  --radius-xl: 0px;
-
-  /* Departure Mono renders correctly only at integer multiples of 11px.
-     Fractional sizes turn a pixel font into mush and every reason to use
-     it evaporates. Line heights stay on the 14px lattice. */
-  --text-chrome: 11px;
-  --text-chrome--line-height: 14px;
-  --text-display-1: 22px;
-  --text-display-1--line-height: 28px;
-  --text-display-2: 33px;
-  --text-display-2--line-height: 42px;
-  --text-display-3: 44px;
-  --text-display-3--line-height: 56px;
-  --text-display-4: 66px;
-  --text-display-4--line-height: 70px;
-
-  /* Commit Mono for reading. 16/28 keeps prose on the same lattice. */
-  --text-body: 16px;
-  --text-body--line-height: 28px;
-  --text-small: 14px;
-  --text-small--line-height: 28px;
-
-  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
-  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --animate-marquee: marquee var(--duration) infinite linear;
-  --animate-marquee-vertical: marquee-vertical var(--duration) linear infinite;
-  @keyframes marquee {
-  from {
-    transform: translateX(0);
-    }
-  to {
-    transform: translateX(calc(-100% - var(--gap)));
-    }
-  }
-  @keyframes marquee-vertical {
-  from {
-    transform: translateY(0);
-    }
-  to {
-    transform: translateY(calc(-100% - var(--gap)));
-    }
-  }
+body {
+  font-size: 1.1875rem;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
 }
 
-/* ==========================================================================
-   BASE
-   ========================================================================== */
-
-@layer base {
-  * {
-    border-color: var(--rule);
-    min-width: 0;
-  }
-
-  html {
-    color-scheme: light;
-    /* The full-bleed hero uses 100vw; without this a vertical scrollbar makes
-       100vw wider than the viewport and produces a horizontal scrollbar. */
-    overflow-x: hidden;
-    /* Anchors land on the lattice, clear of the sticky status bar. */
-    scroll-padding-top: calc(var(--cell-h) * 6);
-    -webkit-text-size-adjust: 100%;
-  }
-
-  html.dark {
-    color-scheme: dark;
-  }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font-commit);
-    font-size: 16px;
-    line-height: 28px;
-    font-variant-ligatures: none;
-    text-rendering: optimizeLegibility;
-  }
-
-  /* Departure Mono is a pixel font. Antialiasing it is the single fastest way
-     to destroy it: the whole point is hard 1px edges on a 50-unit grid. */
-  .font-departure,
-  [class*="text-chrome"],
-  [class*="text-display"] {
-    font-family: var(--font-departure);
-    -webkit-font-smoothing: none;
-    -moz-osx-font-smoothing: unset;
-    font-smooth: never;
-    letter-spacing: 0;
-  }
-
-  h1,
-  h2,
-  h3,
-  h4 {
-    font-family: var(--font-departure);
-    -webkit-font-smoothing: none;
-    font-weight: 400;
-    text-wrap: balance;
-  }
-
-  p {
-    text-wrap: pretty;
-  }
-
-  ::selection {
-    background: var(--amber);
-    color: var(--bg);
-    text-shadow: none;
-  }
-
-  :focus-visible {
-    outline: 2px solid var(--amber);
-    outline-offset: 2px;
-  }
-
-  /* No rounded scrollbar. This is a terminal. */
-  ::-webkit-scrollbar {
-    width: var(--cell-w);
-    height: var(--cell-w);
-  }
-  ::-webkit-scrollbar-track {
-    background: var(--bg-inset);
-  }
-  ::-webkit-scrollbar-thumb {
-    background: var(--rule);
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: var(--dim);
-  }
-
-  a {
-    color: inherit;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 3px;
-  }
-
-  /* tabular by default: every number on this site sits in a column */
-  :where(td, th, time, [data-numeric]) {
-    font-variant-numeric: tabular-nums;
-  }
+a {
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  transition:
+    text-decoration-color 150ms ease-out,
+    color 150ms ease-out;
 }
 
-/* ==========================================================================
-   UTILITIES
-   ========================================================================== */
-
-@utility cell-grid {
-  /* Snap a container's width down to a whole number of cells so nothing ever
-     straddles half a character. */
-  width: round(down, 100%, var(--cell-w));
+a:hover {
+  color: var(--accent);
+  text-decoration-color: currentColor;
 }
 
-@utility glow {
-  text-shadow: var(--glow);
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
-/* The ASCII field. One <pre>, one text node, never one span per cell:
-   11,700 spans fails Lighthouse's DOM-size audit on its own. */
-@utility ascii-field {
-  font-family: var(--font-departure);
-  font-size: 11px;
-  line-height: 14px;
-  -webkit-font-smoothing: none;
-  font-smooth: never;
-  letter-spacing: 0;
-  white-space: pre;
-  user-select: none;
-  /* `content`, not `strict`: strict implies SIZE containment, which sizes the
-     element as if it were empty and collapses a shrink-to-fit <pre> to 0x0. */
-  contain: content;
-  tab-size: 1;
+h1,
+h2,
+h3,
+h4 {
+  line-height: 1;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
 }
 
-/* The content column. 896px at 7px/cell is 128 cells, with a 1rem gutter each
-   side so the measure never touches the viewport edge. */
-@utility measure {
-  margin-inline: auto;
-  max-width: min(100% - 2rem, 896px);
+h1,
+.relic-note h3 {
+  font-family: var(--font-display);
+  font-weight: 500;
 }
 
-/* A bordered control: the site's only button-shaped thing. */
-@utility key {
-  border: 1px solid var(--rule);
-  background: var(--bg);
-  padding: var(--spacing) calc(var(--spacing) * 2);
-  color: var(--dim);
-  transition: color 150ms, border-color 150ms;
-
-  &:hover,
-  &:focus-visible {
-    border-color: var(--amber);
-    color: var(--amber);
-  }
+h2 {
+  font-family: var(--font-text);
+  font-weight: 600;
+  letter-spacing: -0.012em;
 }
 
-/* Chrome-weight link. focus-visible is part of the utility so it cannot be
-   omitted at one call site and present at another, which is how four of these
-   ended up keyboard-invisible. */
-@utility chrome-link {
-  color: var(--dim);
-  transition: color 150ms;
-
-  &:hover,
-  &:focus-visible {
-    color: var(--amber);
-  }
-}
-
-@utility rule-h {
-  /* A rule drawn in characters, not a 1px div, so it sits on the lattice. */
-  &::before {
-    content: "";
-    display: block;
-    height: 1px;
-    background: var(--rule);
-  }
-}
-
-/* ==========================================================================
-   THE APERTURE GRILLE
-
-   Vertical stripes, Trinitron-style, dark theme only. Locked to a 3px period
-   at 0.055 opacity. Anything heavier eats a carefully computed 13:1 contrast
-   down to 8:1, which is why the usual 45%-opacity scanline overlay is banned.
-   Barrel distortion, chromatic aberration, rolling scanlines and analog noise
-   are all deliberately absent: they are the 2010 WebGL demo tell.
-   ========================================================================== */
-
-.grille {
-  pointer-events: none;
+.valley {
   position: fixed;
   inset: 0;
-  z-index: 60;
-  opacity: var(--grille-opacity);
-  background: repeating-linear-gradient(
-    90deg,
-    var(--ink-hi) 0px,
-    var(--ink-hi) 1px,
-    transparent 1px,
-    transparent 3px
-  );
-  mix-blend-mode: multiply;
+  width: 100vw;
+  height: 100vh;
+  height: 100lvh;
+  opacity: 0;
+  transition: opacity 900ms ease-out;
 }
 
-.dark .grille {
-  mix-blend-mode: screen;
+.valley[data-ready] {
+  opacity: 1;
 }
 
-[data-crt="off"] .grille {
+.ink-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+main {
+  position: relative;
+  overflow-x: clip;
+}
+
+.stop {
+  min-height: 240vh;
+}
+
+.stop-last {
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
+.pin {
+  position: sticky;
+  top: 0;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  padding: clamp(1rem, 3.5vw, 4rem);
+  opacity: var(--presence, 1);
+  transform: translateY(calc((1 - var(--presence, 1)) * 1.25rem));
+}
+
+.pin-low {
+  align-items: flex-end;
+  padding-bottom: clamp(3rem, 8vh, 6rem);
+}
+
+.stop[data-away] .pin {
+  pointer-events: none;
+}
+
+.plain-button {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease-out,
+    border-color 160ms ease-out,
+    color 160ms ease-out,
+    transform 160ms var(--ease-out);
+}
+
+.plain-button:hover {
+  background: var(--fg);
+  color: var(--ground);
+}
+
+.plain-button:active {
+  transform: scale(0.97);
+}
+
+.plain-button.primary {
+  border-color: var(--fg);
+  background: var(--fg);
+  color: var(--ground);
+}
+
+.plain-button.primary:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.voice {
+  font-style: italic;
+  color: var(--muted);
+}
+
+.hero-text {
+  position: relative;
+  max-width: 40rem;
+}
+
+.hero-text::before {
+  content: "";
+  position: absolute;
+  inset: -4rem -6rem -3rem;
+  z-index: -1;
+  background: radial-gradient(closest-side, rgb(var(--sheet) / 0.78) 40%, rgb(var(--sheet) / 0) 100%);
+  pointer-events: none;
+}
+
+h1 {
+  font-size: clamp(3.25rem, 7.6vw, 7.5rem);
+  letter-spacing: -0.012em;
+  line-height: 0.95;
+}
+
+.hero-summary {
+  margin-top: 1rem;
+  font-size: 1.5rem;
+}
+
+.glance {
+  margin-top: 1rem;
+  border-top: 1px solid var(--rule);
+}
+
+.glance > div {
+  display: grid;
+  grid-template-columns: 8.5rem minmax(0, 1fr);
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.glance dt {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.hero-text .voice {
+  margin-top: 1rem;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.place {
+  display: grid;
+  grid-template-columns: 10rem minmax(0, 34rem);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.sheet {
+  position: relative;
+  max-width: 34rem;
+  padding: 1.5rem;
+  border: 1.5px solid rgb(236 230 212 / 0.62);
+  outline: 1px solid rgb(236 230 212 / 0.22);
+  outline-offset: 4px;
+  border-radius: 2px;
+  background: rgb(var(--sheet) / 0.88);
+}
+
+.sheet-wide {
+  max-width: 37rem;
+}
+
+.band + .band {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--rule);
+}
+
+.sheet-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.sheet-kind {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.sheet-aside {
+  font-size: 1rem;
+  color: var(--muted);
+  text-align: right;
+}
+
+.aside-position {
   display: none;
 }
 
-/* ==========================================================================
-   PROSE
-   ========================================================================== */
-
-.prose-terminal {
-  --tw-prose-body: var(--text);
-  --tw-prose-headings: var(--ink-hi);
-  --tw-prose-links: var(--cyan);
-  --tw-prose-bold: var(--ink-hi);
-  --tw-prose-counters: var(--dim);
-  --tw-prose-bullets: var(--rule);
-  --tw-prose-hr: var(--rule);
-  --tw-prose-quotes: var(--dim);
-  --tw-prose-quote-borders: var(--rule);
-  --tw-prose-captions: var(--dim);
-  --tw-prose-code: var(--amber);
-  --tw-prose-pre-code: var(--text);
-  --tw-prose-pre-bg: var(--bg-inset);
-  --tw-prose-th-borders: var(--rule);
-  --tw-prose-td-borders: var(--rule);
-  max-width: 72ch;
+.sheet h2 {
+  font-size: 2.75rem;
 }
 
-.prose-terminal :where(pre) {
-  border: 1px solid var(--rule);
-  border-radius: 0;
-  font-size: 14px;
-  line-height: 28px;
+.roles {
+  margin-top: 0.75rem;
 }
 
-.prose-terminal :where(code)::before,
-.prose-terminal :where(code)::after {
-  content: "";
+.roles > div + div {
+  margin-top: 0.5rem;
 }
 
-/* Shiki bound to our own tokens so code blocks never ship a second,
-   conflicting palette. */
-.prose-terminal :where(pre) code {
+.roles dt {
+  font-weight: 600;
+}
+
+.roles dd,
+.used-at {
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.used-at {
+  margin-top: 0.75rem;
+}
+
+.steps {
+  margin: 1rem 0 0;
+  counter-reset: step;
+}
+
+.steps li {
+  counter-increment: step;
   display: grid;
-}
-.prose-terminal :where(pre) code > [data-line] {
-  padding-inline: calc(var(--cell-w) * 2);
+  grid-template-columns: 2rem minmax(0, 1fr);
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--rule);
 }
 
-/* ==========================================================================
-   MOTION
-   ========================================================================== */
+.steps li::before {
+  content: counter(step);
+  font-family: var(--font-display);
+  color: var(--accent);
+}
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+.figures {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr 1fr;
+  gap: 1rem;
+  align-items: end;
+  margin: 1rem 0 0;
+}
+
+.figures li:only-child {
+  grid-column: 1 / -1;
+}
+
+.figures strong {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.5rem;
+  line-height: 1;
+  font-variant-numeric: lining-nums;
+}
+
+.figures li:first-child strong {
+  font-size: 2.75rem;
+  color: var(--accent);
+}
+
+.figures span {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 1rem;
+  line-height: 1.25;
+  color: var(--muted);
+}
+
+.sheet-stack {
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.sheet-stack span {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.sheet-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
+  margin-top: 1rem;
+}
+
+.tarot {
+  display: block;
+  width: 100%;
+  margin-top: 1rem;
+  cursor: pointer;
+  transform: rotate(-3deg);
+  transition: transform 220ms var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tarot:hover {
+    transform: rotate(0deg) translateY(-6px);
   }
 }
 
-@keyframes caret {
-  0%,
-  49% {
+.tarot:active {
+  transform: rotate(0deg) scale(0.98);
+}
+
+.card-face {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 10px 18px rgb(0 0 0 / 0.4));
+}
+
+.card-stock {
+  fill: var(--card-paper);
+  stroke: var(--card-ink);
+  stroke-width: 1.5;
+}
+
+.card-frame,
+.emblem {
+  fill: none;
+  stroke: var(--card-ink);
+  stroke-width: 2.1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: url(#rough);
+}
+
+.stop[data-away] .card-frame,
+.stop[data-away] .emblem {
+  filter: none;
+}
+
+.card-frame {
+  stroke-width: 1.5;
+}
+
+.fill-accent {
+  fill: var(--card-accent);
+}
+
+.fill-ink {
+  fill: var(--card-ink);
+}
+
+.fill-paper {
+  fill: var(--card-paper);
+}
+
+.stroke-accent {
+  stroke: var(--card-accent);
+}
+
+.card-numeral,
+.card-name {
+  font-family: var(--font-display);
+  font-weight: 500;
+  fill: var(--card-ink);
+  text-anchor: middle;
+}
+
+.card-numeral {
+  font-size: 34px;
+}
+
+.card-name {
+  font-size: 27px;
+}
+
+.reading {
+  width: min(58rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  border: 1.5px solid var(--card-ink);
+  border-radius: 3px;
+  background: var(--card-paper);
+  color: var(--card-ink);
+  overflow: auto;
+  overscroll-behavior: contain;
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateY(14px) scale(0.975);
+  transition:
+    opacity 140ms ease-out,
+    transform 140ms ease-out,
+    overlay 140ms allow-discrete,
+    display 140ms allow-discrete;
+}
+
+.reading[open] {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 220ms ease-out,
+    transform 260ms var(--ease-out),
+    overlay 260ms allow-discrete,
+    display 260ms allow-discrete;
+}
+
+@starting-style {
+  .reading[open] {
+    opacity: 0;
+    transform: translateY(14px) scale(0.975);
+  }
+}
+
+.reading::backdrop {
+  background: rgb(6 7 12 / 0);
+  transition:
+    background-color 140ms ease-out,
+    overlay 140ms allow-discrete,
+    display 140ms allow-discrete;
+}
+
+.reading[open]::backdrop {
+  background: rgb(6 7 12 / 0.7);
+  transition:
+    background-color 260ms ease-out,
+    overlay 260ms allow-discrete,
+    display 260ms allow-discrete;
+}
+
+@starting-style {
+  .reading[open]::backdrop {
+    background: rgb(6 7 12 / 0);
+  }
+}
+
+.reading-close {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: flex-end;
+  padding: 1rem 1.5rem 0;
+  pointer-events: none;
+}
+
+.reading-close .plain-button {
+  background: var(--card-paper);
+  pointer-events: auto;
+}
+
+.reading-sheet {
+  display: grid;
+  grid-template-columns: 13rem minmax(0, 1fr);
+  gap: 2rem;
+  padding: 0 2rem 2rem;
+  align-items: start;
+}
+
+.reading-sheet .card-face {
+  position: sticky;
+  top: 1.5rem;
+  filter: none;
+}
+
+.reading-kind {
+  font-weight: 600;
+  color: var(--card-accent);
+}
+
+.reading-text h3 {
+  margin-top: 0.5rem;
+  font-family: var(--font-text);
+  font-weight: 600;
+  font-size: 2.75rem;
+  letter-spacing: -0.012em;
+}
+
+.reading .roles dd,
+.reading .used-at,
+.reading .figures span {
+  color: color-mix(in srgb, var(--card-ink) 72%, transparent);
+}
+
+.reading .figures li:first-child strong {
+  color: var(--card-accent);
+}
+
+.reading-voice {
+  margin-top: 1rem;
+  font-style: italic;
+}
+
+.reading .figures {
+  margin-top: 1.5rem;
+  padding: 1rem 0;
+  border-top: 1px solid color-mix(in srgb, var(--card-ink) 28%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--card-ink) 28%, transparent);
+}
+
+.deeds {
+  margin-top: 1.5rem;
+}
+
+.deeds h4 {
+  font-family: var(--font-text);
+  font-size: 1.1875rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--card-accent);
+}
+
+.deeds ul {
+  margin: 0.5rem 0 0;
+  padding: 0 0 0 1.25rem;
+  list-style: disc;
+}
+
+.deeds li::marker {
+  color: var(--card-accent);
+}
+
+.deeds li + li {
+  margin-top: 0.5rem;
+}
+
+.reading-stack {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid color-mix(in srgb, var(--card-ink) 28%, transparent);
+  font-size: 1rem;
+}
+
+.reading .plain-button:hover {
+  background: var(--card-ink);
+  color: var(--card-paper);
+}
+
+.reading :focus-visible {
+  outline-color: var(--card-accent);
+}
+
+.shelf {
+  margin-top: 1rem;
+}
+
+.shelf-row {
+  display: flex;
+  gap: 0.25rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 2px solid currentColor;
+}
+
+.relic {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0.25rem;
+  cursor: pointer;
+  opacity: 0.55;
+  transform-origin: 50% 100%;
+  transition:
+    opacity 160ms ease-out,
+    transform 200ms var(--ease-out);
+}
+
+.relic[aria-selected="true"] {
+  opacity: 1;
+  transform: translateY(-4px) scale(1.08);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .relic:hover {
     opacity: 1;
   }
-  50%,
-  100% {
-    opacity: 0;
+}
+
+.relic-art {
+  width: 100%;
+  max-width: 4.25rem;
+  margin: 0 auto;
+}
+
+.relic-art .emblem {
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.relic-art .fill-accent {
+  fill: var(--accent);
+  stroke: none;
+}
+
+.relic-art .stroke-accent {
+  stroke: var(--accent);
+}
+
+.relic-note {
+  margin-top: 1rem;
+  min-height: 9rem;
+}
+
+.relic-note h3 {
+  font-size: 2rem;
+}
+
+.relic-note p {
+  margin-top: 0.5rem;
+}
+
+.contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+}
+
+.sheet .voice {
+  margin-top: 0.75rem;
+}
+
+.colophon {
+  margin-top: 1rem;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.place-index {
+  position: fixed;
+  top: 50%;
+  right: clamp(1rem, 2.2vw, 2.25rem);
+  z-index: 5;
+  transform: translateY(-50%);
+  display: none;
+  width: 13rem;
+  max-height: calc(100svh - 2rem);
+  overflow-y: auto;
+  padding: 1rem;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: rgb(var(--sheet) / 0.8);
+}
+
+@media (min-width: 72rem) {
+  .place-index {
+    display: block;
+  }
+}
+
+.index-group + .index-group {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--rule);
+}
+
+.index-group p {
+  font-size: 0.875rem;
+  font-style: italic;
+  line-height: 1.25;
+  color: var(--muted);
+}
+
+.place-index ol {
+  margin: 0.25rem 0 0;
+}
+
+.place-index a {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.125rem 0;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.5;
+  text-decoration: none;
+  color: var(--fg);
+  opacity: 0.78;
+  transition:
+    opacity 160ms ease-out,
+    color 160ms ease-out;
+}
+
+.place-index small {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.place-index a:hover {
+  opacity: 1;
+}
+
+.place-index a[aria-current] {
+  opacity: 1;
+  color: var(--accent);
+}
+
+@media (max-width: 47.99rem) {
+  body {
+    font-size: 1.0625rem;
+  }
+
+  .pin {
+    align-items: flex-end;
+    padding-bottom: 1rem;
+  }
+
+  .place {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tarot,
+  .aside-card {
+    display: none;
+  }
+
+  .aside-position {
+    display: inline;
+  }
+
+  .sheet {
+    padding: 1rem;
+  }
+
+  .sheet h2 {
+    font-size: 2.25rem;
+  }
+
+  .band + .band {
+    margin-top: 1rem;
+    padding-top: 1rem;
+  }
+
+  .sheet-stack {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    overflow: hidden;
+  }
+
+  .figures {
+    gap: 0.5rem;
+  }
+
+  .figures li:first-child strong {
+    font-size: 2rem;
+  }
+
+  .glance > div {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .glance a,
+  .contact a,
+  .hero-actions a:not(.plain-button) {
+    display: inline-block;
+    padding: 0.5rem 0;
+  }
+
+  .hero-text::before {
+    inset: -3rem -1rem -2rem;
+  }
+
+  .reading-sheet {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    padding: 0 1rem 1rem;
+  }
+
+  .reading-sheet .card-face {
+    position: static;
+    width: 7.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .pin,
+  .tarot,
+  .tarot:hover,
+  .relic,
+  .relic[aria-selected="true"],
+  .reading,
+  .plain-button:active {
+    transform: none;
+  }
+
+  @starting-style {
+    .reading[open] {
+      transform: none;
+    }
+  }
+
+  .card-frame,
+  .emblem {
+    filter: none;
   }
 }

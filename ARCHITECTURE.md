@@ -1,228 +1,151 @@
 # ARCHITECTURE
 
-A text-mode portfolio. Every surface resolves to a character lattice, and the hero is a
-computed spiral galaxy rather than a picture of one.
+A single-page portfolio: server-rendered HTML over one fixed WebGL canvas.
 
 ## Stack
 
 | | |
 |---|---|
-| Framework | Next.js 16.3.3, App Router, Turbopack |
-| React | 19.2.8 |
-| Styling | Tailwind CSS 4.3.3, CSS-first (`@theme`), no `tailwind.config.ts` |
-| Components | shadcn/ui 4.19 (Radix track), Magic UI, React Bits |
-| Motion | `motion` 13.1.1 (the renamed `framer-motion`) |
-| Content | MDX on disk, `gray-matter` + `unified` + Shiki 4 |
-| Package manager | pnpm 10.5.2 |
+| Framework | Next.js 16, App Router, Turbopack |
+| React | 19 |
+| 3D | three.js 0.187, vanilla (no React Three Fiber), WebGL2 |
+| Styling | Tailwind CSS 4 for the reset; the design is plain CSS in `globals.css` |
+| Fonts | Grenze and Grenze Gotisch through `next/font/google` |
+| Package manager | pnpm |
 
-Two versions are deliberately **not** latest:
-
-- **TypeScript is pinned to `^6`.** `typescript@7` is the Go port and exposes no compiler
-  API. `typescript-eslint` declares `<6.1.0`, and `eslint-config-next/typescript` pulls it
-  in, so TS 7 silently disables every type-aware lint rule.
-- **ESLint is pinned to `9`.** `eslint-config-next@16.3.3` declares `eslint >=9`, but its
-  transitive `eslint-plugin-react@7.37.5` (the latest release) calls `context.getFilename()`,
-  removed in ESLint 10. Linting crashes on load. Revisit when eslint-plugin-react ships an
-  ESLint 10 fix.
+Two versions are deliberately not latest; see AGENTS.md.
 
 ## Layout
 
 ```
 src/
   app/
-    fonts.ts              next/font/local. Values must be written literals.
-    globals.css           tokens, lattice, utilities. The whole design system.
+    layout.tsx page.tsx     one route; page.tsx is a server component
+    globals.css fonts.ts
     robots.ts sitemap.ts
-    [lng]/                en | pt. Prerendered per locale.
-      layout.tsx page.tsx work/ writing/[slug]/ render/
   components/
-    hero.tsx              full-bleed hero: name left, field right
-    black-hole/           the renderer's React shell
-    chrome/               top bar, section nav, device toggle, status bar
-    ui/                   shadcn + Magic UI (generated; safe to re-add)
-    vendor/               VERBATIM React Bits copies. See vendor/README.md.
-  data/resume.ts          single source of truth for every fact on the site
-  lib/
-    ascii/                atlas.ts, shaders.ts, renderer.ts
-    blog.ts shiki-theme.ts i18n.ts utils.ts
-  hooks/
-  proxy.ts                locale redirect (was middleware.ts before Next 16)
-scripts/bake-galaxy.mjs  build-time CPU renderer -> the static fallback
+    valley-stage.tsx        client: mounts the canvas, lazy-loads the scene
+    place-panel.tsx         server: one sheet per entry, plus its full-record dialog
+    reading.tsx             client: the dialog element and the buttons that open it
+    place-index.tsx         client: contents list with the current stop
+    study.tsx               client: the relic tabs
+    emblems.tsx relic-art.tsx  card art and the shelf objects (SVG); only relic-art ships to the client
+    ink-defs.tsx            the hand-drawn SVG filter
+    sheet-head.tsx          the kind / position header every sheet shares
+  data/resume.ts            every fact on the site
+  scene/
+    terrain.ts              the height function
+    landmarks.ts            where the named places are
+    world.ts                builds all geometry
+    classes.mjs rng.ts      material class ids; the seeded random generator
+    walkers.ts              the people: limb rigs, routes, walk cycle
+    kit.ts kit-manifest.json  decoder and index for the baked kit models
+    path.ts                 camera stops and the spline through them
+    shaders.ts ink.ts       the two passes and the palette
+    valley.ts               renderer, scroll mapping, frame loop
 ```
 
-## The lattice
+## The scene
 
-Departure Mono has `unitsPerEm = 550` and an advance width of 350. At 11px that is an
-advance of exactly **7.000px** and a line box of exactly **14.000px** — a cell aspect of
-exactly **0.5** on an integer pixel grid. Measured from the OTF, not assumed.
+Most of the valley is built in code at load: terrain from one height function, and the
+castle, houses, bridge, mill and gate from boxes, cylinders, cones and a few extruded
+shapes. `terrain.ts` is the single source for the ground, so the mesh, the things standing
+on it and the camera all agree.
 
-Everything derives from that:
+### Kit models
 
-- `--spacing: 7px`, so `p-2` is 14px, one cell row. Nothing uses Tailwind's 4px scale.
-- Display sizes are integer multiples of 11px; line heights are multiples of 14px.
-  Departure Mono at a fractional size is mush.
-- `--cell-aspect: 0.5` is fed to the shader. Skip the correction and the photon ring
-  renders as an ellipse.
+Pines, dead trees, the church, the graveyard, lantern posts, the well, the cart and the
+people come from CC0 model packs (KayKit Medieval Hexagon Pack, KayKit Halloween Bits, Kenney Graveyard Kit,
+Kenney Fantasy Town Kit). They are not loaded as glTF. `scripts/bake-models.mjs` reads the
+picked models, samples each vertex's colour from the pack's palette texture, turns the
+colour into a material class and tone, and writes every model into one quantised file,
+`public/models/kit.bin` (12 bytes per vertex), with offsets in `src/scene/kit-manifest.json`.
+`kit.ts` decodes it at load. The site ships no glTF loader and no textures.
 
-## The renderer
+The packs themselves are not in the repo, so a fresh clone cannot re-bake until they are
+downloaded into `.model-candidates/` (git-ignored). The script expects these folders:
 
-Three passes, no readback. `gl.readPixels` on the frame you just drew forces a GPU→CPU
-sync stall.
+| Folder | Source (CC0) |
+|---|---|
+| `kaykit-medieval-hexagon-pack/` | github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0 |
+| `kaykit-halloween-bits/` | github.com/KayKit-Game-Assets/KayKit-Halloween-Bits-1.0 |
+| `kenney-graveyard-kit/` | kenney.nl/assets/graveyard-kit |
+| `kenney-fantasy-town-kit/` | kenney.nl/assets/fantasy-town-kit |
 
-1. **Field** (`FIELD_FRAG`) — the galaxy, evaluated per supersample. Exponential disk,
-   de Vaucouleurs (Sersic n=4) bulge, logarithmic spiral arms. Outputs luminance in R and
-   an accent mask in G.
-2. **Quantise** (`QUANT_FRAG`) — box-downsample to the cell grid, Sobel in *cell* space
-   for directional glyphs, dither, temporal hysteresis via ping-pong FBOs.
-3. **Composite** (`GLYPH_FRAG`) — one quad sampling a NEAREST glyph atlas.
+Unzip each so the paths at the top of `MODELS` resolve. To add or change a model, edit
+`MODELS` in the script and run `node scripts/bake-models.mjs`. `--inspect` prints each model's dominant colours without
+writing, which is how the colour rules in `classify` were tuned.
 
-### The arms are a density wave, not material
+### People
 
-A disk rotates differentially, so **material** arms would wind into a coil within a couple
-of galactic rotations — the winding problem. Lin & Shu (1964) resolved it: arms are density
-waves that material passes *through*, and the pattern rotates rigidly at a single pattern
-speed. So the arm phase carries a rigid `−t·Ω` term while a separate noise field is
-advected at `Ω(r) ∝ 1/r`. That is both the physics and the only thing that survives a
-long-running loop: rotating the material would visibly wind the arms up on screen.
+The villagers, the two graveyard skeletons and the ghost are Kenney Graveyard Kit
+characters. Each is six rigid parts (torso, head, arms, legs) with no skeleton, so the bake
+keeps a limb index per vertex (the high nibble of the class byte) and each limb's joint.
+`walkers.ts` splits a character into its parts and swings the limbs itself: no animation
+clips are shipped. Walkers follow the road (`roadX`) or a straight line, turn round at the
+ends, and stand on `groundAt`, which is the terrain except on the bridge deck.
 
-Arms are logarithmic, `θ = ln(r/a)/tan(p)`, at a **19° pitch angle**. Sa–Sc average at or
-under 15.5°; 19° is Sc territory, chosen because tighter than ~15° the arms fall below the
-glyph resolution and read as concentric rings.
+Kit buildings other than the church were tried and dropped: under the night palette they
+read as dark blobs, and the hand-built timber houses read better.
 
-The amber nucleus is not a palette choice: bulges genuinely are red-yellow (old stellar
-populations) and arms blue-white (young hot stars).
+### Two passes
 
-Physics constants live in `shaders.ts`; the CPU twin in `scripts/bake-galaxy.mjs` uses the
-same maths and is parameterised by `GX_*` env vars. Keep the two in parity.
+1. **Geometry pass** into a render target with two colour attachments and a depth texture.
+   Every vertex carries `aTag = (class, tone, id)`. The fragment shader writes lit tone,
+   material class and object id to attachment 0 and the view normal to attachment 1. Both
+   are sampled with nearest filtering because classes and ids are read back as exact values.
+2. **Ink pass**, one full-screen triangle pair. It finds edges from depth, normal and id
+   discontinuities, colours each pixel from its class and tone, lays ink hatching in shadow
+   and chalk hatching in light, adds height mist from the reconstructed world position,
+   window glow, paper grain and a vignette.
 
-### Braille sub-cell rasterisation
+Line boil comes from quantising time: the UV wobble and the hatch offsets use
+`floor(time * 6)` as a seed, so lines hold for a moment and then redraw.
 
-The default mode renders into U+2800-28FF, a 2x4 dot matrix per cell, for **8x** the effective
-resolution on the same grid: 80,360 dots at 205x49 rather than 10,045 cells. The field target is
-allocated at `cols*2 x rows*4` so every Braille dot maps to exactly one field texel: no averaging.
+Object ids are what make details draw: two parts with different ids get an outline between
+them even when coplanar, so a timber beam or a window bar is a thin box with its own id.
 
-- **Departure Mono has 0/256 Braille patterns** (measured from its `cmap`). Commit Mono has all
-  256, so the Braille atlas is built from Commit Mono and `buildBrailleAtlas` throws rather than
-  let a fallback face render at the wrong advance width.
-- The atlas is a 16x16 grid, not one row: 256 cells in a row would be 3584px at DPR 2.
-- **The photon ring bypasses the dither entirely.** It is analytic and one dot wide, so
-  thresholding it like everything else shatters it into speckle: it is the thinnest feature in
-  the frame and the dither has nothing to trade against. Forced on where `ringCov > 0.45`, it
-  stays unbroken at every grid size.
-- Ring width is sized to the **dot** grid (`rows * 4`), not the cell grid. A cell-sized ring is
-  four times thicker than the feature it is meant to draw.
-- The ring's brightness has its own floor, `ring * (0.85 + 0.5 * diskL)`. The earlier
-  `(0.35 + 0.65 * diskL)` throttled it to a third exactly where the disk behind it is dark,
-  which is precisely where it is drawing the silhouette.
-- The per-dot threshold is **interleaved gradient noise**, not Bayer. An 8x8 Bayer matrix aligns
-  with the 2x4 cell structure and produces a visible four-column repeat. IGN has no periodic
-  structure and is still position-only, so it does not shimmer.
-- Braille needs its own tone curve (`TONE.braille`): it resolves 8x more samples, so the ramp's
-  black point leaves the outer falloff reading as an even dither.
+### Material classes
 
-Braille is the only shipped mode. The ramp path survives underneath as a silent fallback for a
-face without the Braille block (`buildBrailleAtlas` throws, the renderer catches and drops to
-`ramp`), but nothing user-facing selects it. The hero carries no stats readout and no visible pause button: the field runs
-to the section boundary instead of under a bar. The pause control still exists for SC 2.2.2,
-using the skip-link pattern - out of the layout until it takes keyboard focus.
+`classes.mjs` is the one place class ids are defined. `world.ts`, `shaders.ts` and
+`scripts/bake-models.mjs` all import it, and the baked `kit.bin` stores the ids, so a
+renumbering happens there and nowhere else. `PALETTE` in `ink.ts` is keyed by class name, so
+TypeScript rejects a class without a colour, and the shader's `uPal` length follows it. The
+class is encoded as `(class + 0.5) / CLASS_SLOTS` (16) in an 8-bit channel.
 
-### Spiral structure
+## Scroll model
 
-`ARMS` is how many angular periods wrap the disk and `SHEAR` is the radial twist that turns
-concentric bands into a spiral. At `ARMS = 19` the filaments fall below the dither resolution and
-the whole disk collapses into uniform grain; **3 broad arms** at `SHEAR = 0.4` wind roughly half a
-turn across the disk and actually read as spiral structure.
+Each stop is a tall `<section>` whose content is `position: sticky`. `valley.ts` measures
+the sections' tops and maps `scrollY` to a progress value: stop `i` at the top of section
+`i`. The camera holds for the first 36% of a section, then eases to the next stop along a
+Catmull-Rom spline. The same loop writes `--presence` on each section, which the CSS uses
+for the panel's opacity.
 
-Density is `band * (0.02 + 3.0 * sn^3)`. The cube matters: it drives the gaps between arms toward
-empty, which is what stops the dither grain from competing with the arms for the eye.
+`path.ts` also holds two waypoints that are not stops; they steer the camera around the
+castle on the way to and from the high tower.
 
-### The ramp is measured
-
-`atlas.ts` rasterises every candidate glyph at boot and sorts by integrated alpha.
-Measured in Departure Mono, `#` (0.284) is **denser than `@`** (0.254) — a hand-ordered
-ramp gets this backwards. Block elements (`░▀▄▒`) carry the ramp to 0.75; without them it
-tops out at 0.284 and every bright region renders as the same washed-out grey.
-
-Index 0 is a literal space, so the shadow is a hole in the text rather than a dim glyph.
-
-A substitution guard drops any glyph the face lacks: a fallback renders at the fallback's
-advance width and silently breaks the 7px lattice.
-
-### Degradation
-
-| Tier | Grid | Steps | SS | Trigger |
-|---|---|---|---|---|
-| 0 | 300 cols | 64 | 2× | desktop dGPU |
-| 1 | 260 cols | 40 | 2× | default |
-| 2 | 260 cols | 24 | 1× | rolling frame time > 12ms |
-| 3 | 110 cols | 20 | 1× | coarse pointer |
-| — | 148×46 | static | — | reduced motion, no JS, no WebGL |
-
-The static tier is `public/static/galaxy.txt`, produced at build time by
-`pnpm run bake` and inlined as **one `<pre>` with one text node**. It is the first paint,
-the no-JS fallback and the reduced-motion state. The homepage ships 212 DOM elements
-against Lighthouse's 800-element warning threshold; one span per cell would be ~6,800.
-
-Gates that apply at every tier: `IntersectionObserver`, `visibilitychange`,
-`powerPreference: 'low-power'`, DPR capped at 2, and `webglcontextlost` handling because
-iOS Safari drops contexts on backgrounding.
-
-## Content
-
-`src/data/resume.ts` is the single source of truth, typed as `Record<Locale, Dictionary>`.
-It replaced three overlapping sources (`resume_en.tsx`, `resume_pt.tsx`, and i18next
-`translation.json`) and the `t('work.experiences') as Array<...>` casts that went with
-them, which were unchecked at compile time.
-
-i18next was removed. The routes (`/en`, `/pt`) and the `proxy.ts` Accept-Language redirect
-are unchanged; only the lookup mechanism is now a typed record.
-
-All content is sourced from the LinkedIn export. No metric is invented — the 80% and 30%
-figures are quoted from it.
-
-## Accessibility
-
-- Every ASCII surface is `aria-hidden`. WCAG Failure F72 names ASCII art without a text
-  alternative as a Level A failure.
-- A visible, keyboard-reachable pause control. SC 2.2.2 applies: the loop auto-starts,
-  runs past five seconds and sits alongside content.
-- Every text token is ≥ 4.5:1 against its own background, verified in OKLCH and in gamut.
-- Skip link, real landmarks, one `<h1>`, ordered `<h2>`s. No headings built from
-  box-drawing glyphs.
+`path.ts` aims each stop to the left of its subject so the subject sits right of the panel.
+On a portrait screen it aims below the subject instead, so the subject sits above the panel.
 
 ## Gotchas
 
-- `ascii-field` uses `contain: content`, not `strict`. `strict` implies size containment,
-  which sizes the element as if empty and collapses a shrink-to-fit `<pre>` to 0×0.
-- Gradients fading to `transparent` interpolate toward transparent *black* and shift hue.
-  Use relative colour syntax: `oklch(from var(--bg) l c h / 0)`.
-- React Bits components do not ship `"use client"`. See `src/components/vendor/README.md`.
-- **rehype-pretty-code detects a raw theme by `Object.hasOwn(theme, "tokenColors")`**, not by
-  Shiki's `settings`. A theme carrying only `settings` is misread as a `{light,dark}` map,
-  `Object.values()` is taken over it, and Shiki is asked for a theme named after whatever that
-  yields. `src/lib/shiki-theme.ts` declares both keys pointing at the same array.
-- `getPost` only returns null on `ENOENT`. Catching every error there made a broken Shiki theme
-  present as a 404, which is a long way to travel for a one-line bug.
-- `next/font` options must be written literals; a shared `const` fails the build.
-- **PixelSwap durations are milliseconds** (defaults 1400 / 450). Passing `0.42` runs the
-  whole dissolve in under half a millisecond, which is indistinguishable from no animation.
-- **Canvas 2D cannot resolve `var(--custom-property)`** in `ctx.font` or `fillStyle`. Read
-  the token to a concrete value with `getComputedStyle` first. ParticleText silently falls
-  back to its default face otherwise.
-- `ParticleText` hardcodes `min-h-[240px]` on its root; override with `min-h-0!` or it
-  overflows its container.
-- `html { overflow-x: hidden }` — the full-bleed hero uses `100vw`, which exceeds the
-  viewport when a vertical scrollbar is present.
-
-## Commands
-
-```bash
-pnpm dev
-pnpm build        # runs bake, then next build
-pnpm bake         # regenerate the static fallback frame
-pnpm lint
-pnpm typecheck
-```
-
-Tuning the galaxy: `GX_PITCH=0.331 GX_SCALE=2.5 GX_INCL=1.0 node scripts/bake-galaxy.mjs`
-prints to stdout. In the browser, `window.__bh` exposes the live tunables.
+- `RawShaderMaterial` does not get three's `USE_INSTANCING` define. The pines use a second
+  material built with `defines: { INSTANCED: 1 }`.
+- Colours are passed to the ink pass as raw sRGB vectors, not `THREE.Color`, because the
+  pass writes straight to the canvas with no colour-space conversion.
+- Everything scattered (houses, trees) checks `occupied`, a list of footprints for the
+  landmark buildings, the castle stairs, lantern posts and each house already placed. A new
+  landmark needs an entry in `FIXED_FOOTPRINTS` or a tree will grow through it.
+- The castle stair is part of the terrain: `height` grades a ramp along the stair line (a
+  cutting where the rock is higher), and `buildStairs` lays the steps on `stairHeight`. An
+  earlier version sampled the ground per step and came out as floating fragments, because
+  the terrain mesh is coarser than the height function.
+- Anything built on a slope needs a plinth or a wall that continues below ground. The
+  mill, the church, the crypt and the gate piers all have one.
+- `roadX` runs dead straight for 13 units either side of the river so the painted road,
+  the bridge deck and the walkers line up.
+- Trees and houses are kept out of a radius around every camera stop and out of each
+  stop's line of sight (`inShot` and `blocksView` in `world.ts`). Move a stop and something
+  may grow in front of the lens.
+- The dialog and its opener are the only client code in a sheet; the sheet's text is
+  rendered on the server once.
