@@ -26,7 +26,7 @@ function CardFace({ card }: { card: Card }) {
   );
 }
 
-function Roles({ roles }: { roles: Role[] }) {
+function Roles({ roles }: { roles: readonly Role[] }) {
   return (
     <dl className="roles">
       {roles.map((role) => (
@@ -39,6 +39,17 @@ function Roles({ roles }: { roles: Role[] }) {
       ))}
     </dl>
   );
+}
+
+function Identity({ card }: { card: Card }) {
+  switch (card.type) {
+    case "role":
+      return <Roles roles={card.roles} />;
+    case "practice":
+      return <p className="used-at">{card.usedAt}</p>;
+    default:
+      return card satisfies never;
+  }
 }
 
 function Figures({ figures }: { figures: Card["figures"] }) {
@@ -59,12 +70,7 @@ export function PlacePanel({ card, when, position }: { card: Card; when?: string
   const titleId = `${card.id}-title`;
   const dialogId = `${card.id}-reading`;
   const readingTitleId = `${card.id}-reading-title`;
-  const identity = (
-    <>
-      {card.roles.length > 0 ? <Roles roles={card.roles} /> : null}
-      {card.usedAt ? <p className="used-at">{card.usedAt}</p> : null}
-    </>
-  );
+  const identity = <Identity card={card} />;
 
   return (
     <article className="place" aria-labelledby={titleId}>
@@ -96,7 +102,7 @@ export function PlacePanel({ card, when, position }: { card: Card; when?: string
 
         <div className="band">
           <p>{card.lede}</p>
-          {card.steps ? (
+          {card.type === "practice" ? (
             <ol className="steps">
               {card.steps.map((step) => (
                 <li key={step}>{step}</li>

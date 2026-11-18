@@ -15,6 +15,21 @@ A single-page portfolio: server-rendered HTML over one fixed WebGL canvas.
 
 Two versions are deliberately not latest; see AGENTS.md.
 
+## Data model
+
+`src/data/resume.ts` holds the cards, groups and relics as `as const` arrays, and the types
+are read back from them, so each id is written once.
+
+- `Card` is a union on `type`: a `role` card has `roles` (at least one), a `practice` card has
+  `usedAt` and `steps`. Narrow on `card.type` to reach either; nothing else tells them apart.
+- `StopId`, `Group` and `Relic["id"]` are the ids in `CARDS`, `GROUPS` and `RELICS`. `emblems.tsx`
+  and `relic-art.tsx` are `Record`s over them, so a card or relic without art does not compile.
+- `numeral` is not written on a card: `CARDS` adds `roman(position)`, so a reorder renumbers.
+- `glance` belongs to a `GROUPS` entry. The hero shows it, or the `years` of the group's role
+  cards when the group has none. `CURRENT_ROLE` is the open role in the `now` group.
+- `tests/resume.types.ts` is checked by `pnpm typecheck` only. Its `@ts-expect-error` lines are
+  the illegal states the model must keep rejecting.
+
 ## Layout
 
 ```
