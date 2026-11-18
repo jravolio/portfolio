@@ -1,0 +1,1 @@
+Screenshots and measurements attached to pull requests on jravolio/portfolio. One folder per PR (`pr-<number>/`). Nothing here is part of the site; the branch holds no source code and is never merged.
