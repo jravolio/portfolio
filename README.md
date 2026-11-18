@@ -1,10 +1,8 @@
 # devjravolio.com
 
-Personal site for Julio Cesar Avolio. A text-mode portfolio: everything resolves to a
-7×14px character lattice, and the hero is a spiral galaxy computed in a WebGL2 fragment
-shader and rasterised into Braille sub-cells.
-
-The `/render` page explains how it works and credits the prior art.
+Personal site for Julio Cesar Avolio. The page is a gothic valley drawn in ink: a
+Three.js scene behind the content, with a camera that travels from the castle to the gate
+as you scroll. Each stop is one job or project.
 
 ```bash
 pnpm install
@@ -14,14 +12,16 @@ pnpm dev
 | | |
 |---|---|
 | `pnpm dev` | dev server |
-| `pnpm build` | bake the fallback frame, then build |
-| `pnpm bake` | regenerate `public/static/galaxy.txt` |
+| `pnpm build` | production build |
 | `pnpm lint` / `pnpm typecheck` | verification |
 
-- [ARCHITECTURE.md](ARCHITECTURE.md) — stack, renderer, layout, gotchas
-- [DESIGN.md](DESIGN.md) — tokens, type, lattice, bans
-- [PRODUCT.md](PRODUCT.md) — audience, voice, anti-references
+- [ARCHITECTURE.md](ARCHITECTURE.md): stack, scene pipeline, scroll model, gotchas
+- [DESIGN.md](DESIGN.md): palette, type, layout, motion
+- [PRODUCT.md](PRODUCT.md): audience, voice, the fiction and its limits
 
-Fonts are self-hosted and SIL OFL: [Departure Mono](https://departuremono.com) by Helena
-Zhang, and [Commit Mono](https://commitmono.com) by Eigil Nikolajsen. Licences ship in
-`public/static/fonts/`.
+Type is [Grenze and Grenze Gotisch](https://github.com/Omnibus-Type/Grenze) by Omnibus-Type,
+SIL OFL, loaded through `next/font`.
+
+Some scene models are baked from CC0 packs by [Kay Lousberg](https://kaylousberg.com)
+(KayKit Medieval Hexagon Pack, KayKit Halloween Bits) and [Kenney](https://kenney.nl)
+(Graveyard Kit, Fantasy Town Kit). See ARCHITECTURE.md for the bake step.

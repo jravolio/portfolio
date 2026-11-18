@@ -1,468 +1,455 @@
-/**
- * Single source of truth for every fact on this site.
- *
- * Sourced from the LinkedIn export at Profile.pdf (5 pages, retrieved
- * 2026-08-28). Nothing here is inferred and no metric is invented: the 80%
- * and 30% figures are quoted from that document.
- */
+// Every fact on the site lives here. Roles, dates and figures are quoted from the LinkedIn profile as of 2026-11-18.
 
-export const LOCALES = ["en", "pt"] as const;
-export type Locale = (typeof LOCALES)[number];
-export const DEFAULT_LOCALE: Locale = "en";
+const CITY = "Rio de Janeiro";
 
 export const SITE = {
   url: "https://devjravolio.com",
   name: "Julio Cesar Avolio",
+  title: "Product Engineer",
   email: "jravolio892@gmail.com",
-  tel: "+55 21 98807-1858",
   github: "https://github.com/jravolio",
   linkedin: "https://www.linkedin.com/in/julio-cesar-avolio/",
-  location: { en: "Rio de Janeiro, Brazil", pt: "Rio de Janeiro, Brasil" },
+  city: CITY,
+  countryCode: "BR",
+  location: `${CITY}, Brazil`,
+  summary:
+    "Product engineer in Rio de Janeiro. I lead design and front end for Scout at SockPuppet, and I build and run RollSummary on the side.",
 } as const;
+
+export type StopId = "seat" | "swarm" | "chronicler" | "courier" | "artificer" | "watchman";
 
 export type Role = {
   org: string;
-  orgUrl?: string;
-  via?: string;
-  role: string;
+  title: string;
+  terms: string;
   start: string;
   end: string | null;
   location: string;
-  stack: string[];
-  lede: string;
-  bullets: string[];
 };
 
-export type Project = {
-  slug: string;
-  name: string;
-  year: string;
-  blurb: string;
-  stack: string[];
-  live?: string;
-  repo?: string;
-};
+export type Group = "now" | "how" | "own" | "before";
 
-export type Education = {
-  school: string;
-  qualification: string;
-  start: string;
-  end: string;
-};
-
-export type Dictionary = {
-  tagline: string;
-  identity: string;
-  now: string;
-  offClock: string;
-  /** Marquee line. Facts about Julio, every one traceable to the résumé.
-   *  Not build metadata and never a decorative logo ticker. */
-  ticker: string[];
-  nav: { index: string; work: string; writing: string; render: string };
-  headings: {
-    now: string;
-    offClock: string;
-    work: string;
-    selectedWork: string;
-    writing: string;
-    education: string;
-    contact: string;
-  };
-  ui: {
-    copyEmail: string;
-    copied: string;
-    allWriting: string;
-    present: string;
-    halt: string;
-    resume_playback: string;
-    theme: string;
-    lang: string;
-    skipToContent: string;
-    reducedMotionNote: string;
-    readRender: string;
-  };
-  work: Role[];
-  projects: Project[];
-  education: Education[];
-  certifications: string[];
-};
-
-const STACK_PLANETBIDS = [
-  "python",
-  "django",
-  "react",
-  "ember",
-  "aws",
-  "terraform",
-  "kubernetes",
-  "opensearch",
-  "ses",
-  "sqs",
+export const GROUPS: Array<{ id: Group; label: string }> = [
+  { id: "now", label: "Now" },
+  { id: "how", label: "How I work" },
+  { id: "own", label: "My own product" },
+  { id: "before", label: "Before" },
 ];
 
-export const CONTENT: Record<Locale, Dictionary> = {
-  en: {
-    tagline: "full-stack engineer",
-    identity:
-      "Julio Cesar Avolio — full-stack engineer in Rio de Janeiro, building e-procurement systems for US public agencies at PlanetBids.",
-    now: "Currently centralising email delivery at PlanetBids: one service on SES, SQS and Kubernetes workers replacing logic that lived in six places. Also writing the renderer behind this page.",
-    offClock:
-      "Off the clock I am at a table rolling dice. Tabletop RPGs are the hobby, and RollSummary came straight out of it: sessions run long, memory runs short, so I built something that listens to a session and writes down what actually happened. Most of what I know about state machines I learned from arguing over initiative order.",
-    ticker: [
-      "rio de janeiro, brazil",
-      "full-stack engineer at planetbids, contracted via gofasti",
-      "building e-procurement for US public agencies",
-      "python · django · react · aws · terraform",
-      "wrote planetbids' first terraform config, and the guidelines with it",
-      "one email service replacing logic that lived in six places",
-      "cut the ont homologation process at v.tal by 80%",
-      "taught an ai vision layer to read scanned bid documents",
-      "keep react and ember talking to each other for a living",
-      "started out watching grafana and zabbix at 3am",
-      "tabletop rpgs on the weekend",
-      "d20 · initiative order · session zero",
-      "rollsummary.com transcribes my sessions",
-      "english and portuguese, both native",
-      "bsc computer science, estácio",
-    ],
-    nav: { index: "index", work: "work", writing: "writing", render: "render" },
-    headings: {
-      now: "now",
-      offClock: "off the clock",
-      work: "work",
-      selectedWork: "selected work",
-      writing: "writing",
-      education: "education",
-      contact: "contact",
-    },
-    ui: {
-      copyEmail: "copy email",
-      copied: "copied",
-      allWriting: "all writing",
-      present: "present",
-      halt: "halt",
-      resume_playback: "resume",
-      theme: "switch between light and dark mode",
-      lang: "português",
-      skipToContent: "skip to content",
-      reducedMotionNote:
-        "Reduced motion is on, so the field below is a single pre-rendered frame.",
-      readRender: "how this was rendered",
-    },
-    work: [
+export type Card = {
+  id: StopId;
+  numeral: string;
+  name: string;
+  welcome: string;
+  group: Group;
+  kind: string;
+  heading: string;
+  glance?: string;
+  usedAt?: string;
+  roles: Role[];
+  link?: { href: string; label: string };
+  lede: string;
+  /** The first figure is the lead outcome; the rest support it. */
+  figures: Array<{ value: string; label: string }>;
+  steps?: string[];
+  deeds: Array<{ topic: string; items: string[] }>;
+  stack: string[];
+};
+
+export const CARDS: Card[] = [
+  {
+    id: "seat",
+    numeral: "I",
+    name: "The Seat",
+    welcome: "You find me at work. The valley is governed from this room.",
+    group: "now",
+    kind: "Current role",
+    heading: "SockPuppet",
+    glance: "where I lead design and front end for Scout.",
+    roles: [
       {
-        org: "PlanetBids",
-        orgUrl: "https://www.planetbids.com",
-        via: "GoFasti",
-        role: "full-stack developer",
-        start: "2025-09",
+        org: "SockPuppet",
+        title: "Product Engineer",
+        terms: "Full-time",
+        start: "2026-02",
         end: null,
-        location: "remote, United States",
-        stack: STACK_PLANETBIDS,
-        lede: "E-procurement for US public agencies. Django backends, AWS infrastructure, and a frontend where React and Ember have to coexist.",
-        bullets: [
-          "Designed and built a unified email service end to end. Delivery logic had been spread across ColdFusion, Django, Hub, Portal, Postfix and separate SES integrations; it is now one service on AWS SES with SQS batch queues, Kubernetes send workers and quota controls. One system now owns the customer lifecycle communications.",
-          "Built the AI extraction flow for agency documents that existed only as scans, tuning the vision layer so scans are detected and their fields read automatically. Cut the time for a customer to fill in a submission.",
-          "Established the company's first infrastructure-as-code pattern: wrote the first Terraform configuration and the guidelines around it, built the internal documentation, guided other services through migration, and owned the CI/CD.",
-          "Maintain the compatibility layer that translates between React and Ember, so React work can continue without breaking the Ember codebase.",
-          "Designed AWS microservices around OpenSearch, improving search performance and enabling advanced indexing workflows.",
-          "Built AI experts and skills that turn product requirements into technical language, speeding up ticket writing and slicing for the product team.",
+        location: "Remote",
+      },
+    ],
+    lede: "I lead design and front end for Scout, the company's new product, which gives investigative teams governed, isolated access to hundreds of online platforms.",
+    figures: [
+      { value: "4 weeks", label: "from an empty repo to beta" },
+      { value: "165", label: "merge requests in 3 months" },
+      { value: "31 to 38%", label: "faster runs for about 3,700 tests" },
+    ],
+    deeds: [
+      {
+        topic: "Scout from zero",
+        items: [
+          "Took the customer portal and staff console from an empty repo to beta in about 4 weeks and to general availability in about 2 months. 165 merge requests in 3 months.",
+          "Work across the stack, from interface to database: usage trends, demand reports, audit logs and data exports, with sign-in and role-based access on WorkOS.",
         ],
       },
+      {
+        topic: "Design system",
+        items: [
+          "Built the product's design system in React, TypeScript and Tailwind CSS, with Storybook, accessibility checks and a color-blind-safe palette.",
+        ],
+      },
+      {
+        topic: "Engineering speed",
+        items: [
+          "Led a front-end refactor across both apps: duplicated code moved into one shared package, one lint and format setup, and upgrades to Vitest 5, TypeScript 7 and Node 26. About 3,700 tests now run 31% to 38% faster and the codebase is about 2,000 lines smaller.",
+          "Sped up CI and the commit loop in GitLab CI: per-pipeline dependency caching, shared checks that run once instead of once per app, and a pre-commit hook that formats, lints and typechecks in about 6 seconds.",
+        ],
+      },
+      {
+        topic: "Analytics",
+        items: [
+          "Shipped product analytics end to end on PostHog, with error tracking in Sentry, feeding the dashboards Product uses for the north star metric, activation funnel and launch success rate.",
+        ],
+      },
+      {
+        topic: "Earlier, on the existing portal",
+        items: ["The Evidence Locker, a staff provisioning wizard and a service status system."],
+      },
+    ],
+    stack: [
+      "TypeScript",
+      "React",
+      "Tailwind CSS",
+      "Storybook",
+      "WorkOS",
+      "Vitest",
+      "Oxlint",
+      "GitLab CI",
+      "PostHog",
+      "Sentry",
+    ],
+  },
+  {
+    id: "swarm",
+    numeral: "II",
+    name: "The Swarm",
+    welcome: "They leave at dusk with their orders, and they come back with the work done.",
+    group: "how",
+    kind: "Not a job",
+    heading: "Agent workflows",
+    glance: "multi-agent pipelines that take a ticket to a tested, recorded change.",
+    usedAt: "Used at SockPuppet and RollSummary.",
+    roles: [],
+    lede: "I design the multi-agent workflows my products ship through. One orchestrator gives the orders, and each agent has one job.",
+    figures: [],
+    steps: [
+      "An orchestrator hands each ticket to a coding agent.",
+      "The coding agent makes the change.",
+      "A second agent tests it in a real browser and records a demo video, captioned by acceptance criterion.",
+    ],
+    deeds: [
+      {
+        topic: "At SockPuppet",
+        items: [
+          "Designed the multi-agent workflow Scout ships through: an orchestrator hands each ticket to a coding agent, then a second agent tests the change in a real browser and records a demo video captioned by acceptance criterion.",
+        ],
+      },
+      {
+        topic: "At RollSummary",
+        items: [
+          "Ship LLM agents on the OpenAI API that build each campaign's wiki through tool calls, plus an MCP connector for Claude.",
+        ],
+      },
+    ],
+    stack: ["Agent orchestration", "OpenAI API", "MCP", "Tool calls", "Browser automation"],
+  },
+  {
+    id: "chronicler",
+    numeral: "III",
+    name: "The Chronicler",
+    welcome: "Every tale told at my table is written down here, whether the players like it or not.",
+    group: "own",
+    kind: "Side project, live and paid",
+    heading: "RollSummary",
+    glance: "a live SaaS with 26 paying customers.",
+    roles: [
+      {
+        org: "RollSummary",
+        title: "Founder and Engineer",
+        terms: "Side project",
+        start: "2024-07",
+        end: null,
+        location: "Remote",
+      },
+    ],
+    link: { href: "https://rollsummary.com", label: "rollsummary.com" },
+    lede: "I build and operate a live SaaS that turns tabletop RPG session recordings into transcripts, summaries and a campaign wiki. I am its only engineer.",
+    figures: [
+      { value: "26", label: "paying customers" },
+      { value: "0", label: "inbound ports open on the server" },
+      { value: "Weekly", label: "automated restore drill" },
+    ],
+    deeds: [
+      {
+        topic: "Product",
+        items: [
+          "Own the product end to end, from design to Stripe billing and customer support, in TypeScript: Next.js and React on the front end, Elysia on Bun with PostgreSQL and Drizzle on the back end.",
+          "Ship LLM agents on the OpenAI API that build each campaign's wiki through tool calls, plus an MCP connector for Claude.",
+        ],
+      },
+      {
+        topic: "Infrastructure",
+        items: [
+          "Moved production from a managed platform to my own VPS: Docker Compose services behind a Cloudflare Tunnel with no inbound ports open, documented with architecture diagrams and runbooks.",
+          "Set up CI/CD in GitHub Actions on self-hosted runners: lint, typecheck, tests against a live database, security scans with Semgrep and Trivy, and automatic deploys.",
+        ],
+      },
+      {
+        topic: "Reliability",
+        items: [
+          "Run background work as async jobs on PostgreSQL with pg-boss: retries, heartbeats and a dead-letter queue that refunds the customer's hours when a job fails for good.",
+          "Built layered backups: continuous WAL archiving for point-in-time recovery, hourly encrypted dumps and a weekly automated restore drill.",
+        ],
+      },
+      {
+        topic: "Monitoring",
+        items: [
+          "Built monitoring with Grafana dashboards on VictoriaMetrics metrics and centralized logs, with Telegram alerts for errors, failed jobs and stale backups.",
+          "Send a daily analytics report to Telegram covering traffic, signups, revenue and AI spend, pulled from PostHog, the database and Stripe.",
+        ],
+      },
+    ],
+    stack: [
+      "TypeScript",
+      "Next.js",
+      "Bun",
+      "Elysia",
+      "PostgreSQL",
+      "Drizzle",
+      "pg-boss",
+      "Docker Compose",
+      "Cloudflare Tunnel",
+      "Grafana",
+      "Stripe",
+    ],
+  },
+  {
+    id: "courier",
+    numeral: "IV",
+    name: "The Courier",
+    welcome: "Everything that enters the valley crosses here. I made the crossing shorter.",
+    group: "before",
+    kind: "Past role",
+    heading: "topictree",
+    roles: [
       {
         org: "topictree",
-        orgUrl: "https://topictree.com",
-        role: "backend developer",
+        title: "Backend Developer",
+        terms: "Freelance",
         start: "2023-12",
         end: "2025-11",
-        location: "remote",
-        stack: ["python", "gcp", "cdn", "scrum"],
-        lede: "Architected and optimised critical infrastructure, most of it around the company's content delivery network.",
-        bullets: [
-          "Designed and implemented the company's CDN, integrated it across services, and wrote the class that streamlined the whole path. Image loading times dropped substantially.",
-          "Researched GCP services, YouTube services and API options, which led to replacing several services with ones better suited to the job.",
-          "Improved the rank tracker: added filters to the visualisations and built fallbacks so images still appear when the source is unavailable.",
-          "Built user activity monitoring and auditing to get a clearer picture of what users actually needed.",
-          "Improved naming conventions and enforced coding standards to keep the codebase consistent.",
+        location: "Remote",
+      },
+    ],
+    lede: "Working in Python on Google Cloud, I designed and built the company's content delivery network and the image pipeline behind it.",
+    figures: [
+      { value: "40%", label: "faster image loading" },
+      { value: "About 20%", label: "lower CDN cost" },
+      { value: "100", label: "keywords in the provider benchmark" },
+    ],
+    deeds: [
+      {
+        topic: "The CDN",
+        items: [
+          "Cut image loading times by 40% by designing and building the CDN for video and channel thumbnails: a Cloud Function fed by a Cloud Tasks queue downloads each image, compresses it and stores it in Cloud Storage.",
+          "Created the CDN module in the company's internal cloud package, used by every data collector.",
+          "Cut CDN costs by about 20% by skipping thumbnails that were already stored, so a refresh no longer re-processes every image.",
         ],
       },
       {
+        topic: "Data collection",
+        items: [
+          "Benchmarked two YouTube data providers across 100 keywords for result consistency and response time, then migrated the collector to the new one.",
+          "Built an API usage reporter: a Cloud Function that tracks requests and spend across four external APIs, stores them in MySQL and emails an alert when one passes 80% of its limit.",
+        ],
+      },
+      {
+        topic: "Delivery",
+        items: [
+          "Set up CI/CD in GitHub Actions: each Cloud Function deploys automatically to the development and production environments.",
+          "Full-stack product work in FastAPI, Next.js and React: first-login tracking for product analytics and user activation, usage limits and search filters in the REST API, and resilient image fallbacks in the UI.",
+        ],
+      },
+    ],
+    stack: [
+      "Python",
+      "Google Cloud",
+      "Cloud Functions",
+      "Cloud Tasks",
+      "Cloud Storage",
+      "FastAPI",
+      "MySQL",
+      "GitHub Actions",
+    ],
+  },
+  {
+    id: "artificer",
+    numeral: "V",
+    name: "The Artificer",
+    welcome: "The wheel turns whether anyone watches it or not. That was the point of building it.",
+    group: "before",
+    kind: "Past role",
+    heading: "V.tal",
+    roles: [
+      {
         org: "V.tal",
-        orgUrl: "https://www.vtal.com",
-        role: "full-stack developer",
+        title: "Full Stack Developer",
+        terms: "Full-time",
         start: "2022-08",
         end: "2023-11",
-        location: "Rio de Janeiro, Brazil",
-        stack: ["python", "react", "django", "uipath", "jenkins", "docker", "postgresql", "linux"],
-        lede: "Automation of critical network operations tasks, plus the web tooling the operations teams used to watch the result.",
-        bullets: [
-          "Led the ONT homologation automation project, which reduced the process time by 80%.",
-          "Built automations with UiPath, Python, Selenium and RobotFramework.",
-          "Used Jenkins to create health checks that validated the integrity of production environments, reducing unexpected incidents.",
-          "Led development of the integration portal in React and Django, giving operations teams the tooling to monitor and manage systems. It reduced incident response time by 30%.",
-          "Maintained and configured the Linux environments, and set up Docker environments for portability.",
-        ],
+        location: "Rio de Janeiro and remote",
       },
       {
         org: "V.tal",
-        orgUrl: "https://www.vtal.com",
-        role: "O&M intern",
+        title: "O&M Intern",
+        terms: "Part-time",
         start: "2022-01",
         end: "2022-08",
-        location: "Rio de Janeiro, Brazil",
-        stack: ["linux", "openstack", "zabbix"],
-        lede: "Preventive server maintenance and private-cloud monitoring.",
-        bullets: [
-          "Assisted in preventive activities on the servers, working in Linux.",
+        location: "Rio de Janeiro",
+      },
+    ],
+    lede: "I started as an operations intern and stayed on as a full-stack developer, automating critical network operations tasks and building the web tools the operations teams used to watch the result.",
+    figures: [{ value: "80%", label: "less time to homologate a new device" }],
+    deeds: [
+      {
+        topic: "Automation",
+        items: [
+          "Led the ONT homologation automation project, which reduced the time to homologate new devices by 80%.",
+          "Built automations with UiPath, Python, Selenium and RobotFramework.",
+          "Used Jenkins to create health checks that validate the integrity of production environments.",
+        ],
+      },
+      {
+        topic: "Tools for operations",
+        items: [
+          "Led development of the integration portal in React and Django, which operations teams used to monitor and manage their systems.",
+          "Maintained and configured the Linux production environments, and set up Docker environments and the applications that ran in them.",
+        ],
+      },
+      {
+        topic: "As an intern",
+        items: [
+          "Assisted in preventive maintenance of the servers, working in Linux.",
           "Used OpenStack and Zabbix to monitor private cloud performance.",
         ],
       },
+    ],
+    stack: [
+      "Python",
+      "React",
+      "Django",
+      "UiPath",
+      "Selenium",
+      "RobotFramework",
+      "Jenkins",
+      "Docker",
+      "PostgreSQL",
+      "Linux",
+      "OpenStack",
+    ],
+  },
+  {
+    id: "watchman",
+    numeral: "VI",
+    name: "The Watchman",
+    welcome: "I began at the gate, on the night watch. Someone has to see the trouble first.",
+    group: "before",
+    kind: "Where I started",
+    heading: "Oi",
+    roles: [
       {
         org: "Oi",
-        orgUrl: "https://www.oi.com.br",
-        role: "IT intern",
+        title: "IT Intern",
+        terms: "Part-time",
         start: "2021-08",
         end: "2021-12",
-        location: "Rio de Janeiro, Brazil",
-        stack: ["grafana", "zabbix", "linux"],
-        lede: "Keeping critical systems and networks available, and handling the alarms when they were not.",
-        bullets: [
-          "Administered the Grafana and Zabbix monitoring tools so anomalies were caught early.",
+        location: "Rio de Janeiro",
+      },
+    ],
+    lede: "An internship keeping critical systems and networks available, and handling the alarms when they were not.",
+    figures: [],
+    deeds: [
+      {
+        topic: "Monitoring",
+        items: ["Administered the Grafana and Zabbix monitoring tools so anomalies were caught early."],
+      },
+      {
+        topic: "Incidents",
+        items: [
           "Handled Business Alarms that impacted the network and servers, working to restore normal operation.",
-          "Used SGFT, the fault and traffic management system, to document incidents and track resolution.",
+          "Used SGFT, the fault and traffic management system, to document incidents and track their resolution.",
         ],
       },
     ],
-    projects: [
-      {
-        slug: "rollsummary",
-        name: "RollSummary",
-        year: "2024",
-        blurb:
-          "Transcribes and summarises tabletop RPG sessions, built because I play them and kept losing what happened last week. Next.js server components over the Whisper and GPT APIs.",
-        stack: ["next.js", "react", "typescript", "whisper", "gpt"],
-        live: "https://rollsummary.com",
-      },
-      {
-        slug: "transcriber",
-        name: "Transcriber",
-        year: "2024",
-        blurb:
-          "Self-hosted Whisper transcription service. Django with Celery for the job queue and Redis as the broker.",
-        stack: ["django", "celery", "redis", "whisper", "docker"],
-        repo: "https://github.com/jravolio/Transcriber",
-      },
-      {
-        slug: "galaxy",
-        name: "This page",
-        year: "2026",
-        blurb:
-          "A spiral galaxy computed in a WebGL2 fragment shader and rasterised into Braille sub-cells, eight dots per character. The arms rotate as a density wave. Written up in full.",
-        stack: ["webgl2", "glsl", "typescript", "next.js"],
-        live: "/render",
-      },
-    ],
-    education: [
-      {
-        school: "Estácio",
-        qualification: "BSc Computer Science",
-        start: "2021-07",
-        end: "2025-11",
-      },
-      {
-        school: "Wizard by Pearson",
-        qualification: "English",
-        start: "2012-02",
-        end: "2020-11",
-      },
-    ],
-    certifications: ["Containers Fundamentals", "Linux Fundamentals", "MongoDB"],
+    stack: ["Grafana", "Zabbix", "SGFT", "Network monitoring"],
   },
+];
 
-  pt: {
-    tagline: "engenheiro full-stack",
-    identity:
-      "Julio Cesar Avolio — engenheiro full-stack no Rio de Janeiro, construindo sistemas de compras públicas para órgãos americanos na PlanetBids.",
-    now: "No momento estou centralizando o envio de e-mails na PlanetBids: um serviço sobre SES, SQS e workers em Kubernetes substituindo lógica que existia em seis lugares. Também escrevendo o renderizador por trás desta página.",
-    offClock:
-      "Fora do expediente eu estou numa mesa rolando dados. RPG de mesa é o hobby, e o RollSummary saiu direto dele: as sessões são longas e a memória é curta, então construí algo que escuta a sessão e anota o que de fato aconteceu. Boa parte do que sei sobre máquinas de estado eu aprendi discutindo ordem de iniciativa.",
-    ticker: [
-      "rio de janeiro, brasil",
-      "engenheiro full-stack na planetbids, contratado via gofasti",
-      "compras públicas para órgãos americanos",
-      "python · django · react · aws · terraform",
-      "escrevi o primeiro terraform da planetbids, e as diretrizes junto",
-      "um serviço de e-mail no lugar de lógica espalhada por seis lugares",
-      "reduzi em 80% a homologação de ONTs na v.tal",
-      "ensinei uma camada de visão a ler documentos digitalizados",
-      "vivo fazendo react e ember conversarem",
-      "comecei olhando grafana e zabbix às 3 da manhã",
-      "rpg de mesa no fim de semana",
-      "d20 · ordem de iniciativa · sessão zero",
-      "rollsummary.com transcreve minhas sessões",
-      "inglês e português, ambos nativos",
-      "bacharelado em ciência da computação, estácio",
-    ],
-    nav: { index: "início", work: "trajetória", writing: "textos", render: "render" },
-    headings: {
-      now: "agora",
-      offClock: "fora do expediente",
-      work: "trajetória",
-      selectedWork: "trabalhos selecionados",
-      writing: "textos",
-      education: "formação",
-      contact: "contato",
-    },
-    ui: {
-      copyEmail: "copiar e-mail",
-      copied: "copiado",
-      allWriting: "todos os textos",
-      present: "atual",
-      halt: "parar",
-      resume_playback: "retomar",
-      theme: "alternar entre modo claro e escuro",
-      lang: "english",
-      skipToContent: "pular para o conteúdo",
-      reducedMotionNote:
-        "Movimento reduzido está ativo, então o campo abaixo é um único quadro pré-renderizado.",
-      readRender: "como isto foi renderizado",
-    },
-    work: [
-      {
-        org: "PlanetBids",
-        orgUrl: "https://www.planetbids.com",
-        via: "GoFasti",
-        role: "desenvolvedor full-stack",
-        start: "2025-09",
-        end: null,
-        location: "remoto, Estados Unidos",
-        stack: STACK_PLANETBIDS,
-        lede: "Compras públicas para órgãos americanos. Backends em Django, infraestrutura AWS e um frontend onde React e Ember precisam conviver.",
-        bullets: [
-          "Projetei e construí de ponta a ponta um serviço unificado de e-mail. A lógica de envio estava espalhada por ColdFusion, Django, Hub, Portal, Postfix e integrações SES separadas; hoje é um serviço sobre AWS SES, com filas SQS em lote, workers de envio em Kubernetes e controle de cota. Um sistema passou a ser dono de toda a comunicação com o cliente.",
-          "Construí o fluxo de extração com IA para documentos que só existiam como digitalizações, ajustando a camada de visão para que os arquivos sejam detectados e seus campos lidos automaticamente. Reduziu drasticamente o tempo de preenchimento pelo cliente.",
-          "Estabeleci o primeiro padrão de infraestrutura como código da empresa: escrevi a primeira configuração Terraform e as diretrizes, montei a documentação interna, orientei a migração de outros serviços e cuidei do CI/CD.",
-          "Mantenho a camada de compatibilidade que traduz entre React e Ember, permitindo evoluir o React sem quebrar a base Ember.",
-          "Projetei microsserviços AWS em torno do OpenSearch, melhorando a performance de busca e viabilizando fluxos avançados de indexação.",
-          "Construí agentes e skills de IA que traduzem requisitos de produto para linguagem técnica, acelerando a escrita e o fatiamento de tickets.",
-        ],
-      },
-      {
-        org: "topictree",
-        orgUrl: "https://topictree.com",
-        role: "desenvolvedor backend",
-        start: "2023-12",
-        end: "2025-11",
-        location: "remoto",
-        stack: ["python", "gcp", "cdn", "scrum"],
-        lede: "Arquitetei e otimizei componentes críticos de infraestrutura, boa parte em torno da CDN da empresa.",
-        bullets: [
-          "Projetei e implementei a CDN da empresa, integrei-a a todos os serviços e escrevi a classe que padronizou o caminho inteiro. O tempo de carregamento das imagens caiu de forma expressiva.",
-          "Pesquisei serviços do GCP, do YouTube e alternativas de API, o que levou a substituir serviços por opções mais adequadas.",
-          "Melhorei o rank tracker: adicionei filtros às visualizações e criei fallbacks para que as imagens apareçam mesmo quando a origem está indisponível.",
-          "Construí monitoramento e auditoria de atividade para entender melhor o que os usuários precisavam.",
-          "Melhorei convenções de nomenclatura e reforcei padrões de código para manter a base consistente.",
-        ],
-      },
-      {
-        org: "V.tal",
-        orgUrl: "https://www.vtal.com",
-        role: "desenvolvedor full-stack",
-        start: "2022-08",
-        end: "2023-11",
-        location: "Rio de Janeiro, Brasil",
-        stack: ["python", "react", "django", "uipath", "jenkins", "docker", "postgresql", "linux"],
-        lede: "Automação de tarefas críticas de operação de rede, e as ferramentas web que os times de operação usavam para acompanhar o resultado.",
-        bullets: [
-          "Liderei o projeto de automação da homologação de ONTs, que reduziu o tempo do processo em 80%.",
-          "Construí automações com UiPath, Python, Selenium e RobotFramework.",
-          "Usei Jenkins para criar health checks que validavam a integridade dos ambientes de produção, reduzindo incidentes inesperados.",
-          "Liderei o desenvolvimento do portal de integração em React e Django, dando aos times de operação as ferramentas para monitorar e gerenciar os sistemas. Reduziu o tempo de resposta a incidentes em 30%.",
-          "Mantive e configurei os ambientes Linux, e montei ambientes Docker para portabilidade.",
-        ],
-      },
-      {
-        org: "V.tal",
-        orgUrl: "https://www.vtal.com",
-        role: "estagiário de O&M",
-        start: "2022-01",
-        end: "2022-08",
-        location: "Rio de Janeiro, Brasil",
-        stack: ["linux", "openstack", "zabbix"],
-        lede: "Manutenção preventiva de servidores e monitoramento de nuvem privada.",
-        bullets: [
-          "Auxiliei nas atividades preventivas dos servidores, trabalhando em Linux.",
-          "Usei OpenStack e Zabbix para monitorar a performance da nuvem privada.",
-        ],
-      },
-      {
-        org: "Oi",
-        orgUrl: "https://www.oi.com.br",
-        role: "estagiário de TI",
-        start: "2021-08",
-        end: "2021-12",
-        location: "Rio de Janeiro, Brasil",
-        stack: ["grafana", "zabbix", "linux"],
-        lede: "Manter sistemas e redes críticas disponíveis, e tratar os alarmes quando não estavam.",
-        bullets: [
-          "Administrei as ferramentas de monitoramento Grafana e Zabbix para detectar anomalias cedo.",
-          "Tratei Business Alarms que impactavam rede e servidores, atuando para restabelecer a operação.",
-          "Usei o SGFT, sistema de gestão de falhas e tráfego, para documentar incidentes e acompanhar a resolução.",
-        ],
-      },
-    ],
-    projects: [
-      {
-        slug: "rollsummary",
-        name: "RollSummary",
-        year: "2024",
-        blurb:
-          "Transcreve e resume sessões de RPG de mesa, feito porque eu jogo e vivia esquecendo o que rolou na semana anterior. Server components do Next.js sobre as APIs Whisper e GPT.",
-        stack: ["next.js", "react", "typescript", "whisper", "gpt"],
-        live: "https://rollsummary.com",
-      },
-      {
-        slug: "transcriber",
-        name: "Transcriber",
-        year: "2024",
-        blurb:
-          "Serviço de transcrição self-hosted com Whisper. Django com Celery na fila de jobs e Redis como broker.",
-        stack: ["django", "celery", "redis", "whisper", "docker"],
-        repo: "https://github.com/jravolio/Transcriber",
-      },
-      {
-        slug: "galaxy",
-        name: "Esta página",
-        year: "2026",
-        blurb:
-          "Uma galáxia espiral calculada em um fragment shader WebGL2 e rasterizada em sub-células Braille, oito pontos por caractere. Os braços giram como uma onda de densidade. Documentado por inteiro.",
-        stack: ["webgl2", "glsl", "typescript", "next.js"],
-        live: "/render",
-      },
-    ],
-    education: [
-      {
-        school: "Estácio",
-        qualification: "Bacharelado em Ciência da Computação",
-        start: "2021-07",
-        end: "2025-11",
-      },
-      {
-        school: "Wizard by Pearson",
-        qualification: "Inglês",
-        start: "2012-02",
-        end: "2020-11",
-      },
-    ],
-    certifications: ["Containers Fundamentals", "Linux Fundamentals", "MongoDB"],
-  },
+export type Relic = {
+  id: "dice" | "camera" | "shard" | "cup" | "blade" | "lantern";
+  name: string;
+  note: string;
 };
 
-export function getContent(locale: string): Dictionary {
-  return CONTENT[(LOCALES as readonly string[]).includes(locale) ? (locale as Locale) : DEFAULT_LOCALE];
+export const RELICS: Relic[] = [
+  {
+    id: "dice",
+    name: "A set of dice",
+    note: "I run the table more often than I sit at it. Dungeons & Dragons 5e, and the campaign that stayed with me was Curse of Strahd, which is why this valley looks the way it does. RollSummary came out of those sessions.",
+  },
+  {
+    id: "shard",
+    name: "A shard from a brighter city",
+    note: "Cyberpunk 2077. It does not belong in a castle and I keep it anyway. I love that game.",
+  },
+  {
+    id: "camera",
+    name: "An instant camera",
+    note: "Life is Strange.",
+  },
+  {
+    id: "cup",
+    name: "A porcelain cup with a straw",
+    note: "Cuphead. Every frame of it was drawn by hand, which is the standard this page is chasing.",
+  },
+  {
+    id: "blade",
+    name: "A blade, much used",
+    note: "Dark Souls III, Sekiro and both Dishonored games. I am told that dying repeatedly builds character.",
+  },
+  {
+    id: "lantern",
+    name: "A lantern that never goes out",
+    note: "My own server. RollSummary runs on a VPS I operate myself, with backups, dashboards and alerts that reach my phone before a customer notices anything.",
+  },
+];
+
+export const EDUCATION = {
+  school: "Estácio",
+  qualification: "BSc Computer Science",
+  start: "2021-07",
+  end: "2025-11",
+} as const;
+
+const MONTH = new Intl.DateTimeFormat("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
+
+function formatMonth(value: string) {
+  const [year, month] = value.split("-").map(Number);
+  return MONTH.format(new Date(Date.UTC(year, month - 1)));
 }
 
-/** `2025-09` -> `2025-09`; null -> the localised "present". Never `new Date()`. */
-export function formatPeriod(start: string, end: string | null, present: string) {
-  return `${start} — ${end ?? present}`;
+export function yearOf(value: string) {
+  return Number(value.slice(0, 4));
+}
+
+export function formatPeriod(start: string, end: string | null) {
+  return `${formatMonth(start)} to ${end ? formatMonth(end) : "now"}`;
 }
