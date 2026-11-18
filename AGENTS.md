@@ -11,7 +11,8 @@ audience, the voice and the fiction.
 1. **Facts live in `src/data/resume.ts`.** One file, typed. Every role, date and figure is
    quoted from the owner's LinkedIn profile; do not invent a metric, and do not hard-code a
    fact in a component. The hero summary, the contents list and the JSON-LD are all derived
-   from that file.
+   from that file. So are the ids and each card's numeral: write a card, group or relic once,
+   in its array. ARCHITECTURE.md ("Data model") explains how the types are derived.
 2. **Real names in roman type, fiction in blackletter.** Company names, roles, dates and
    navigation are set in Grenze. Grenze Gotisch is for the owner's name, card names,
    numerals, figures and the names of the objects on the study shelf only. Blackletter company names misread ("Agent" as "Rgent").
@@ -38,8 +39,9 @@ Bumping either needs a green `pnpm lint`.
 pnpm lint && pnpm typecheck && pnpm test && pnpm build
 ```
 
-All four must pass. `pnpm test` runs Node's built-in test runner over `tests/`: it covers the
-data in `resume.ts`, the terrain height function and the baked model file's format. There are
+All four must pass. `pnpm test` runs Node's built-in test runner over `tests/**/*.test.mjs`: it
+covers the data in `resume.ts`, the terrain height function and the baked model file's
+format. `tests/resume.types.ts` is type-checked by `pnpm typecheck` and never run. There are
 no component or WebGL tests; the stops are checked by eye. For visual work, look at every stop (`hero`, `seat`, `swarm`,
 `chronicler`, `courier`, `artificer`, `watchman`, `study`, `gate`) at 1440px and 390px:
 scroll to the section's `offsetTop` and wait three seconds for the camera to settle. Check

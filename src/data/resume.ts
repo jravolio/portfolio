@@ -16,8 +16,6 @@ export const SITE = {
     "Product engineer in Rio de Janeiro. I lead design and front end for Scout at SockPuppet, and I build and run RollSummary on the side.",
 } as const;
 
-export type StopId = "seat" | "swarm" | "chronicler" | "courier" | "artificer" | "watchman";
-
 export type Role = {
   org: string;
   title: string;
@@ -27,45 +25,54 @@ export type Role = {
   location: string;
 };
 
-export type Group = "now" | "how" | "own" | "before";
+type GroupEntry<Id extends string = string> = {
+  id: Id;
+  label: string;
+  /** The hero's sentence for the group; a group without one shows the years of its roles. */
+  glance?: string;
+};
 
-export const GROUPS: Array<{ id: Group; label: string }> = [
-  { id: "now", label: "Now" },
-  { id: "how", label: "How I work" },
-  { id: "own", label: "My own product" },
+const GROUP_DATA = [
+  { id: "now", label: "Now", glance: "where I lead design and front end for Scout." },
+  {
+    id: "how",
+    label: "How I work",
+    glance: "multi-agent pipelines that take a ticket to a tested, recorded change.",
+  },
+  { id: "own", label: "My own product", glance: "a live SaaS with 26 paying customers." },
   { id: "before", label: "Before" },
-];
+] as const satisfies readonly GroupEntry[];
 
-export type Card = {
-  id: StopId;
-  numeral: string;
+export type Group = (typeof GROUP_DATA)[number]["id"];
+
+export const GROUPS: readonly GroupEntry<Group>[] = GROUP_DATA;
+
+type CardBase = {
   name: string;
   welcome: string;
   group: Group;
   kind: string;
   heading: string;
-  glance?: string;
-  usedAt?: string;
-  roles: Role[];
   link?: { href: string; label: string };
   lede: string;
   /** The first figure is the lead outcome; the rest support it. */
-  figures: Array<{ value: string; label: string }>;
-  steps?: string[];
-  deeds: Array<{ topic: string; items: string[] }>;
-  stack: string[];
+  figures: ReadonlyArray<{ value: string; label: string }>;
+  deeds: ReadonlyArray<{ topic: string; items: readonly string[] }>;
+  stack: readonly string[];
 };
 
-export const CARDS: Card[] = [
+export type RoleCard = CardBase & { type: "role"; roles: readonly [Role, ...Role[]] };
+export type PracticeCard = CardBase & { type: "practice"; usedAt: string; steps: readonly string[] };
+
+const CARD_DATA = [
   {
     id: "seat",
-    numeral: "I",
+    type: "role",
     name: "The Seat",
     welcome: "You find me at work. The valley is governed from this room.",
     group: "now",
     kind: "Current role",
     heading: "SockPuppet",
-    glance: "where I lead design and front end for Scout.",
     roles: [
       {
         org: "SockPuppet",
@@ -129,15 +136,13 @@ export const CARDS: Card[] = [
   },
   {
     id: "swarm",
-    numeral: "II",
+    type: "practice",
     name: "The Swarm",
     welcome: "They leave at dusk with their orders, and they come back with the work done.",
     group: "how",
     kind: "Not a job",
     heading: "Agent workflows",
-    glance: "multi-agent pipelines that take a ticket to a tested, recorded change.",
     usedAt: "Used at SockPuppet and RollSummary.",
-    roles: [],
     lede: "I design the multi-agent workflows my products ship through. One orchestrator gives the orders, and each agent has one job.",
     figures: [],
     steps: [
@@ -163,13 +168,12 @@ export const CARDS: Card[] = [
   },
   {
     id: "chronicler",
-    numeral: "III",
+    type: "role",
     name: "The Chronicler",
     welcome: "Every tale told at my table is written down here, whether the players like it or not.",
     group: "own",
     kind: "Side project, live and paid",
     heading: "RollSummary",
-    glance: "a live SaaS with 26 paying customers.",
     roles: [
       {
         org: "RollSummary",
@@ -233,7 +237,7 @@ export const CARDS: Card[] = [
   },
   {
     id: "courier",
-    numeral: "IV",
+    type: "role",
     name: "The Courier",
     welcome: "Everything that enters the valley crosses here. I made the crossing shorter.",
     group: "before",
@@ -292,7 +296,7 @@ export const CARDS: Card[] = [
   },
   {
     id: "artificer",
-    numeral: "V",
+    type: "role",
     name: "The Artificer",
     welcome: "The wheel turns whether anyone watches it or not. That was the point of building it.",
     group: "before",
@@ -358,7 +362,7 @@ export const CARDS: Card[] = [
   },
   {
     id: "watchman",
-    numeral: "VI",
+    type: "role",
     name: "The Watchman",
     welcome: "I began at the gate, on the night watch. Someone has to see the trouble first.",
     group: "before",
@@ -391,15 +395,62 @@ export const CARDS: Card[] = [
     ],
     stack: ["Grafana", "Zabbix", "SGFT", "Network monitoring"],
   },
-];
+] as const satisfies readonly ((RoleCard | PracticeCard) & { id: string })[];
 
-export type Relic = {
-  id: "dice" | "camera" | "shard" | "cup" | "blade" | "lantern";
-  name: string;
-  note: string;
-};
+export type StopId = (typeof CARD_DATA)[number]["id"];
 
-export const RELICS: Relic[] = [
+export type Card = (RoleCard | PracticeCard) & { id: StopId; numeral: string };
+
+export function whenOf(card: Card): string | undefined {
+  const roles = rolesOf([card]);
+  return roles.length > 0 ? years(roles) : undefined;
+}
+
+const ROMAN = [
+  ["M", 1000],
+  ["CM", 900],
+  ["D", 500],
+  ["CD", 400],
+  ["C", 100],
+  ["XC", 90],
+  ["L", 50],
+  ["XL", 40],
+  ["X", 10],
+  ["IX", 9],
+  ["V", 5],
+  ["IV", 4],
+  ["I", 1],
+] as const;
+
+export function roman(n: number) {
+  let out = "";
+  for (const [glyph, value] of ROMAN) for (; n >= value; n -= value) out += glyph;
+  return out;
+}
+
+export const CARDS: readonly Card[] = CARD_DATA.map((card, i) => ({ ...card, numeral: roman(i + 1) }));
+
+export function rolesOf(cards: readonly Card[]): Role[] {
+  return cards.flatMap((card) => {
+    switch (card.type) {
+      case "role":
+        return card.roles;
+      case "practice":
+        return [];
+      default:
+        return card satisfies never;
+    }
+  });
+}
+
+const openNow = rolesOf(CARDS.filter((card) => card.group === "now")).filter((role) => role.end === null);
+if (openNow.length !== 1) {
+  throw new Error(`The "now" group has ${openNow.length} roles without an end date and the page needs exactly one`);
+}
+
+export const CURRENT_ROLE: Role = openNow[0];
+
+export const RELICS = [
   {
     id: "dice",
     name: "A set of dice",
@@ -430,7 +481,9 @@ export const RELICS: Relic[] = [
     name: "A lantern that never goes out",
     note: "My own server. RollSummary runs on a VPS I operate myself, with backups, dashboards and alerts that reach my phone before a customer notices anything.",
   },
-];
+] as const satisfies readonly { id: string; name: string; note: string }[];
+
+export type Relic = (typeof RELICS)[number];
 
 export const EDUCATION = {
   school: "Estácio",
@@ -448,6 +501,14 @@ function formatMonth(value: string) {
 
 export function yearOf(value: string) {
   return Number(value.slice(0, 4));
+}
+
+export function years(roles: readonly Role[]) {
+  if (roles.length === 0) throw new RangeError("years needs at least one role");
+  const start = Math.min(...roles.map((role) => yearOf(role.start)));
+  if (roles.some((role) => role.end === null)) return `${start} to now`;
+  const end = Math.max(...roles.map((role) => yearOf(role.end!)));
+  return start === end ? String(start) : `${start} to ${end}`;
 }
 
 export function formatPeriod(start: string, end: string | null) {

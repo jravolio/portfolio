@@ -1,9 +1,14 @@
 import * as THREE from "three";
-import { CARDS } from "@/data/resume";
+import { CARDS, type StopId } from "@/data/resume";
 import { BALCONY, BRIDGE, MILL, SCRIBE, TOWER_TOP, WATCH } from "./landmarks";
 import { CRAG, GATE_Z, WATER_Y, clamp01, height, riverZ, roadX } from "./terrain";
 
-export const STOP_IDS = ["hero", ...CARDS.map((card) => card.id), "study", "gate"];
+export const STOP_IDS: readonly (StopId | "hero" | "study" | "gate")[] = [
+  "hero",
+  ...CARDS.map((card) => card.id),
+  "study",
+  "gate",
+];
 
 type Vec = [number, number, number];
 // A stop with `via` is a waypoint the camera passes through between two real stops, to steer it around the castle.

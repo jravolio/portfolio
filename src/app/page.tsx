@@ -5,23 +5,14 @@ import { PlacePanel } from "@/components/place-panel";
 import { SheetHead } from "@/components/sheet-head";
 import { Study } from "@/components/study";
 import { ValleyStage } from "@/components/valley-stage";
-import { CARDS, type Card, EDUCATION, GROUPS, SITE, yearOf } from "@/data/resume";
+import { CARDS, type Card, CURRENT_ROLE, EDUCATION, GROUPS, SITE, rolesOf, whenOf, yearOf, years } from "@/data/resume";
 
-function years(cards: Card[]) {
-  const roles = cards.flatMap((card) => card.roles);
-  if (roles.length === 0) return undefined;
-  const start = Math.min(...roles.map((role) => yearOf(role.start)));
-  if (roles.some((role) => role.end === null)) return `${start} to now`;
-  const end = Math.max(...roles.map((role) => yearOf(role.end!)));
-  return start === end ? String(start) : `${start} to ${end}`;
-}
+const WHEN = new Map(CARDS.map((card) => [card.id, whenOf(card)]));
 
-const WHEN = new Map(CARDS.map((card) => [card.id, years([card])]));
-
-const SECTIONS = GROUPS.map((group) => ({
-  ...group,
-  cards: CARDS.filter((card) => card.group === group.id),
-}));
+const SECTIONS = GROUPS.map((group) => {
+  const cards = CARDS.filter((card) => card.group === group.id);
+  return { ...group, cards, glance: group.glance ?? `${years(rolesOf(cards))}.` };
+});
 
 const INDEX: IndexGroup[] = [
   { label: "Home", items: [{ id: "hero", label: SITE.name }] },
@@ -44,7 +35,7 @@ function position(card: Card) {
   return `${section.label}, ${section.cards.indexOf(card) + 1} of ${section.cards.length}`;
 }
 
-function NameList({ cards }: { cards: Card[] }) {
+function NameList({ cards }: { cards: readonly Card[] }) {
   return cards.map((card, i) => (
     <span key={card.id}>
       {i === 0 ? "" : i === cards.length - 1 ? " and " : ", "}
@@ -55,7 +46,6 @@ function NameList({ cards }: { cards: Card[] }) {
 
 export default function HomePage() {
   preload("/models/kit.bin", { as: "fetch", crossOrigin: "anonymous" });
-  const current = CARDS[0].roles[0];
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Person",
@@ -67,7 +57,7 @@ export default function HomePage() {
     email: `mailto:${SITE.email}`,
     address: { "@type": "PostalAddress", addressLocality: SITE.city, addressCountry: SITE.countryCode },
     sameAs: [SITE.github, SITE.linkedin],
-    worksFor: { "@type": "Organization", name: current.org },
+    worksFor: { "@type": "Organization", name: CURRENT_ROLE.org },
   };
 
   return (
@@ -89,18 +79,15 @@ export default function HomePage() {
                 {SITE.title} in {SITE.location}.
               </p>
               <dl className="glance">
-                {SECTIONS.map(({ id, label, cards }) => {
-                  const single = cards.length === 1 ? cards[0].glance : undefined;
-                  return (
-                    <div key={id}>
-                      <dt>{label}</dt>
-                      <dd>
-                        <NameList cards={cards} />
-                        {single ? `, ${single}` : `, ${years(cards)}.`}
-                      </dd>
-                    </div>
-                  );
-                })}
+                {SECTIONS.map(({ id, label, cards, glance }) => (
+                  <div key={id}>
+                    <dt>{label}</dt>
+                    <dd>
+                      <NameList cards={cards} />
+                      {`, ${glance}`}
+                    </dd>
+                  </div>
+                ))}
               </dl>
               <p className="voice">Enter freely. Every lit window in this valley is work of mine.</p>
               <p className="hero-actions">
