@@ -1,0 +1,78 @@
+$ pnpm lint
+
+> portfolio@2.0.0 lint /Users/jravolio/.t3/worktrees/portfolio/t3-5ac6a314-d1baeb01b6c9c385
+> eslint .
+
+exit: 0
+
+$ pnpm --silent run typecheck
+exit: 0
+$ pnpm test
+
+> portfolio@2.0.0 test /Users/jravolio/.t3/worktrees/portfolio/t3-5ac6a314-d1baeb01b6c9c385
+> node --test "tests/**/*.test.mjs"
+
+✔ the manifest describes kit.bin exactly: contiguous offsets, no spare bytes (0.75625ms)
+✔ every vertex carries a real material class and a real limb (4.596834ms)
+✔ only the characters have limb joints, and they have all of them or the parts they use (1.165542ms)
+✔ a model's quantised bounds are sane (0.274625ms)
+✔ the palette has a colour for every material class and no gaps in the ids (0.836542ms)
+✔ formatPeriod names both ends, and 'now' for an open role (1.839875ms)
+✔ yearOf reads the year of a YYYY-MM value (0.09325ms)
+✔ every card has a unique id and numeral, and a known group (0.109125ms)
+✔ every group has a card, so the hero and the contents never show an empty row (0.075459ms)
+✔ a group of several cards does not depend on a glance line (0.072167ms)
+✔ roles end after they start (0.063291ms)
+✔ a card shows at most three figures and has highlights with content (0.071792ms)
+✔ the scene looks up the section called swarm, so a card must have that id (0.050667ms)
+✔ the shelf's objects have unique ids (0.063292ms)
+✔ copy has no em dashes or middle dots, which DESIGN.md bans (0.835166ms)
+✔ the location is built from the city, so the two cannot disagree (0.052042ms)
+✔ the ground is finite everywhere on the map (5.049584ms)
+✔ the castle stair is graded into the ground along its whole length (0.316ms)
+✔ the stair only ever goes down from the castle (0.090042ms)
+✔ the castle floor is flat (0.14325ms)
+✔ the road runs straight across the river, so it meets the bridge deck (0.069291ms)
+✔ sstep accepts its edges in either order and stays in 0..1 (0.068667ms)
+✔ the seeded generator repeats and stays in [0, 1) (0.375541ms)
+✔ every point lands in exactly one tile, in ascending order (2.320791ms)
+✔ tile assignment is deterministic and spatially coherent (1.148ms)
+✔ a grid of one keeps everything together and degenerate input does not divide by zero (0.078208ms)
+✔ a tile's bounding sphere contains every pine placed in it (3.511667ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 151.218458
+$ pnpm build
+
+> portfolio@2.0.0 build /Users/jravolio/.t3/worktrees/portfolio/t3-5ac6a314-d1baeb01b6c9c385
+> next build
+
+▲ Next.js 16.3.3 (Turbopack)
+✓ Running next.config.mjs took 6ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 4.2s
+  Running TypeScript ...
+  Finished TypeScript in 1583ms ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/6) ...
+  Generating static pages using 7 workers (1/6) 
+  Generating static pages using 7 workers (2/6) 
+  Generating static pages using 7 workers (4/6) 
+✓ Generating static pages using 7 workers (6/6) in 292ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /robots.txt
+└ ○ /sitemap.xml
+
+
+○  (Static)  prerendered as static content
+
