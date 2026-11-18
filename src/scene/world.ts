@@ -19,6 +19,7 @@ import {
 } from "./landmarks";
 import { CAMERA_SPOTS, SIGHTLINES } from "./path";
 import { mulberry } from "./rng";
+import { tileMeshes } from "./tiles";
 import {
   CRAG,
   GATE_Z,
@@ -760,6 +761,8 @@ function buildDeadTrees(bag: Bag, rng: () => number, kit: Kit) {
   }
 }
 
+const PINE_GRID = 8;
+
 function buildPines(rng: () => number, kit: Kit) {
   const bag = new Bag();
   bag.addKit(kit.pine, place(0, 0, 0, 0, 0, 0, 3.4));
@@ -769,7 +772,7 @@ function buildPines(rng: () => number, kit: Kit) {
     if (tags.getX(i) !== CLS.foliage) tags.setXY(i, CLS.wood, 0.22);
   }
 
-  const spots: THREE.Matrix4[] = [];
+  const spots: Array<{ x: number; z: number; m: THREE.Matrix4 }> = [];
   let tries = 0;
   while (spots.length < 1500 && tries++ < 30000) {
     const x = (rng() - 0.5) * 420;
@@ -782,13 +785,9 @@ function buildPines(rng: () => number, kit: Kit) {
     if (h < 3 || h > 78) continue;
     const slope = Math.abs(height(x + 2, z) - h) + Math.abs(height(x, z + 2) - h);
     if (slope > 3.4) continue;
-    spots.push(place(x, h - 0.9, z, rng() * 6, 0, 0, 0.9 + rng() * 1.3));
+    spots.push({ x, z, m: place(x, h - 0.9, z, rng() * 6, 0, 0, 0.9 + rng() * 1.3) });
   }
-  const mesh = new THREE.InstancedMesh(geo, undefined, spots.length);
-  spots.forEach((m, i) => mesh.setMatrixAt(i, m));
-  mesh.instanceMatrix.needsUpdate = true;
-  mesh.frustumCulled = false;
-  return mesh;
+  return tileMeshes(geo, spots, PINE_GRID);
 }
 
 function buildWaterAndSky() {
@@ -837,7 +836,7 @@ type World = {
   terrain: THREE.BufferGeometry;
   buildings: THREE.BufferGeometry;
   backdrop: THREE.BufferGeometry;
-  pines: THREE.InstancedMesh;
+  pines: THREE.InstancedMesh[];
   wheel: THREE.Mesh;
   lord: { group: THREE.Group; body: THREE.Mesh; head: THREE.Mesh };
   bats: THREE.InstancedBufferGeometry;

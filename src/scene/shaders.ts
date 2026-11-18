@@ -1,7 +1,55 @@
 import { CLASS_SLOTS, CLS } from "./classes.mjs";
 import { PALETTE } from "./ink";
 
-const f = (n: number) => n.toFixed(1);
+const f = (n: number) => (Number.isInteger(n) ? n.toFixed(1) : String(n));
+
+const GRAIN_BODY = 1.6;
+const GRAIN_FIBRE = 0.5;
+
+// Both noises lie in -0.5..0.5, so the weighted sum stays inside +-GRAIN_SPAN / 2 and the bake scales it into 0..1 before splitting it over two 8-bit channels.
+const GRAIN_CODEC = `
+const float GRAIN_SPAN = ${f(GRAIN_BODY + GRAIN_FIBRE)};
+
+vec2 packGrain(float sum) {
+  float level = (sum / GRAIN_SPAN + 0.5) * 255.0;
+  float whole = floor(level);
+  return vec2(whole / 255.0, level - whole);
+}
+
+float unpackGrain(vec2 baked) {
+  return (baked.r * 255.0 + baked.g) / 255.0 - 0.5;
+}
+`;
+
+const NOISE = `
+float hash21(vec2 p) {
+  p = fract(p * vec2(123.34, 456.21));
+  p += dot(p, p + 45.32);
+  return fract(p.x * p.y);
+}
+
+float vnoise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(
+    mix(hash21(i), hash21(i + vec2(1.0, 0.0)), u.x),
+    mix(hash21(i + vec2(0.0, 1.0)), hash21(i + vec2(1.0, 1.0)), u.x),
+    u.y
+  );
+}
+
+float fbm(vec2 p) {
+  float s = 0.0;
+  float a = 0.5;
+  for (int i = 0; i < 4; i++) {
+    s += vnoise(p) * a;
+    p = p * 2.03 + 17.1;
+    a *= 0.5;
+  }
+  return s / 0.9375;
+}
+`;
 
 export const GEOMETRY_VERT = `
 precision highp float;
@@ -10,6 +58,7 @@ in vec3 normal;
 in vec3 aTag;
 #ifdef INSTANCED
 in mat4 instanceMatrix;
+in float aPine;
 #endif
 uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
@@ -23,7 +72,7 @@ void main() {
   vTag = aTag;
   #ifdef INSTANCED
   m = m * instanceMatrix;
-  vTag.z = fract(aTag.z + float(gl_InstanceID) * 0.137);
+  vTag.z = fract(aTag.z + aPine * 0.137);
   #endif
   vWorldNormal = normalize(mat3(m) * normal);
   vViewNormal = normalize(mat3(viewMatrix) * vWorldNormal);
@@ -122,6 +171,7 @@ precision highp float;
 uniform sampler2D tData;
 uniform sampler2D tNormal;
 uniform sampler2D tDepth;
+uniform sampler2D tGrain;
 uniform vec2 uRes;
 uniform float uScale;
 uniform float uTime;
@@ -150,35 +200,7 @@ uniform float uBoil;
 uniform float uVignette;
 in vec2 vUv;
 out vec4 outColor;
-
-float hash21(vec2 p) {
-  p = fract(p * vec2(123.34, 456.21));
-  p += dot(p, p + 45.32);
-  return fract(p.x * p.y);
-}
-
-float vnoise(vec2 p) {
-  vec2 i = floor(p);
-  vec2 f = fract(p);
-  vec2 u = f * f * (3.0 - 2.0 * f);
-  return mix(
-    mix(hash21(i), hash21(i + vec2(1.0, 0.0)), u.x),
-    mix(hash21(i + vec2(0.0, 1.0)), hash21(i + vec2(1.0, 1.0)), u.x),
-    u.y
-  );
-}
-
-float fbm(vec2 p) {
-  float s = 0.0;
-  float a = 0.5;
-  for (int i = 0; i < 4; i++) {
-    s += vnoise(p) * a;
-    p = p * 2.03 + 17.1;
-    a *= 0.5;
-  }
-  return s / 0.9375;
-}
-
+${NOISE}${GRAIN_CODEC}
 float linearDepth(float z) {
   float n = z * 2.0 - 1.0;
   return 2.0 * uNear * uFar / (uFar + uNear - n * (uFar - uNear));
@@ -327,12 +349,26 @@ void main() {
   float veil = (1.0 - fog * 0.8) * (1.0 - mist * 0.85);
   col = mix(col, uInk, edge * uInkAlpha * veil);
 
-  float grain = fbm(px * 0.85) - 0.5;
-  float fibre = vnoise(px * vec2(0.035, 0.9)) - 0.5;
-  col *= 1.0 - uGrain * (grain * 1.6 + fibre * 0.5);
+  vec2 baked = texelFetch(tGrain, ivec2(gl_FragCoord.xy), 0).rg;
+  col *= 1.0 - uGrain * unpackGrain(baked) * GRAIN_SPAN;
   float corner = smoothstep(0.45, 1.05, length((vUv - 0.5) * vec2(1.15, 1.0)) * 1.5);
   col *= 1.0 - uVignette * corner;
 
   outColor = vec4(col, 1.0);
+}
+`;
+
+export const GRAIN_FRAG = `
+precision highp float;
+uniform vec2 uRes;
+uniform float uScale;
+in vec2 vUv;
+out vec4 outColor;
+${NOISE}${GRAIN_CODEC}
+void main() {
+  vec2 px = vUv * uRes / uScale;
+  float grain = fbm(px * 0.85) - 0.5;
+  float fibre = vnoise(px * vec2(0.035, 0.9)) - 0.5;
+  outColor = vec4(packGrain(grain * ${f(GRAIN_BODY)} + fibre * ${f(GRAIN_FIBRE)}), 0.0, 1.0);
 }
 `;
