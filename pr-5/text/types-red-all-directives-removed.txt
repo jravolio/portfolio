@@ -1,0 +1,29 @@
+== red (every directive removed: each marked line is a real error) ==
+tests/resume.types.ts(13,14): error TS2322: Type '{ type: "role"; name: string; welcome: string; group: Group; kind: string; heading: string; link?: { href: string; label: string; } | undefined; lede: string; figures: ReadonlyArray<{ value: string; label: string; }>; deeds: ReadonlyArray<{ topic: string; items: readonly string[]; }>; stack: readonly string[]; }' is not assignable to type 'RoleCard'.
+  Property 'roles' is missing in type '{ type: "role"; name: string; welcome: string; group: Group; kind: string; heading: string; link?: { href: string; label: string; } | undefined; lede: string; figures: ReadonlyArray<{ value: string; label: string; }>; deeds: ReadonlyArray<{ topic: string; items: readonly string[]; }>; stack: readonly string[]; }' but required in type '{ type: "role"; roles: readonly [Role, ...Role[]]; }'.
+tests/resume.types.ts(14,66): error TS2322: Type '[]' is not assignable to type 'readonly [Role, ...Role[]]'.
+  Source has 0 element(s) but target requires 1.
+tests/resume.types.ts(15,83): error TS2353: Object literal may only specify known properties, and 'usedAt' does not exist in type 'RoleCard'.
+tests/resume.types.ts(16,84): error TS2353: Object literal may only specify known properties, and 'steps' does not exist in type 'RoleCard'.
+tests/resume.types.ts(17,109): error TS2353: Object literal may only specify known properties, and 'roles' does not exist in type 'PracticeCard'.
+tests/resume.types.ts(18,14): error TS2322: Type '{ type: "practice"; steps: never[]; name: string; welcome: string; group: Group; kind: string; heading: string; link?: { href: string; label: string; } | undefined; lede: string; figures: ReadonlyArray<{ value: string; label: string; }>; deeds: ReadonlyArray<{ topic: string; items: readonly string[]; }>; stack: read...' is not assignable to type 'PracticeCard'.
+  Property 'usedAt' is missing in type '{ type: "practice"; steps: never[]; name: string; welcome: string; group: Group; kind: string; heading: string; link?: { href: string; label: string; } | undefined; lede: string; figures: ReadonlyArray<{ value: string; label: string; }>; deeds: ReadonlyArray<{ topic: string; items: readonly string[]; }>; stack: read...' but required in type '{ type: "practice"; usedAt: string; steps: readonly string[]; }'.
+tests/resume.types.ts(19,14): error TS2322: Type '{ type: "practice"; usedAt: string; name: string; welcome: string; group: Group; kind: string; heading: string; link?: { href: string; label: string; } | undefined; lede: string; figures: ReadonlyArray<{ value: string; label: string; }>; deeds: ReadonlyArray<{ topic: string; items: readonly string[]; }>; stack: read...' is not assignable to type 'PracticeCard'.
+  Property 'steps' is missing in type '{ type: "practice"; usedAt: string; name: string; welcome: string; group: Group; kind: string; heading: string; link?: { href: string; label: string; } | undefined; lede: string; figures: ReadonlyArray<{ value: string; label: string; }>; deeds: ReadonlyArray<{ topic: string; items: readonly string[]; }>; stack: read...' but required in type '{ type: "practice"; usedAt: string; steps: readonly string[]; }'.
+tests/resume.types.ts(20,51): error TS2322: Type '"job"' is not assignable to type '"role"'.
+tests/resume.types.ts(21,83): error TS2353: Object literal may only specify known properties, and 'numeral' does not exist in type 'RoleCard'.
+tests/resume.types.ts(22,54): error TS2322: Type '"later"' is not assignable to type '"now" | "how" | "own" | "before"'.
+tests/resume.types.ts(24,36): error TS2339: Property 'roles' does not exist on type 'Card'.
+  Property 'roles' does not exist on type 'CardBase & { type: "practice"; usedAt: string; steps: readonly string[]; } & { id: "seat" | "swarm" | "chronicler" | "courier" | "artificer" | "watchman"; numeral: string; }'.
+tests/resume.types.ts(25,36): error TS2339: Property 'steps' does not exist on type 'Card'.
+  Property 'steps' does not exist on type 'CardBase & { type: "role"; roles: readonly [Role, ...Role[]]; } & { id: "seat" | "swarm" | "chronicler" | "courier" | "artificer" | "watchman"; numeral: string; }'.
+tests/resume.types.ts(26,62): error TS2339: Property 'roles' does not exist on type 'CardBase & { type: "practice"; usedAt: string; steps: readonly string[]; } & { id: "seat" | "swarm" | "chronicler" | "courier" | "artificer" | "watchman"; numeral: string; }'.
+tests/resume.types.ts(27,32): error TS2339: Property 'glance' does not exist on type 'Card'.
+  Property 'glance' does not exist on type 'CardBase & { type: "role"; roles: readonly [Role, ...Role[]]; } & { id: "seat" | "swarm" | "chronicler" | "courier" | "artificer" | "watchman"; numeral: string; }'.
+tests/resume.types.ts(30,14): error TS2322: Type '"hall"' is not assignable to type '"seat" | "swarm" | "chronicler" | "courier" | "artificer" | "watchman"'.
+tests/resume.types.ts(32,14): error TS2739: Type '{ seat: string; }' is missing the following properties from type 'Record<"seat" | "swarm" | "chronicler" | "courier" | "artificer" | "watchman", string>': swarm, chronicler, courier, artificer, watchman
+tests/resume.types.ts(34,14): error TS2322: Type '"later"' is not assignable to type '"now" | "how" | "own" | "before"'.
+tests/resume.types.ts(35,14): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+tests/resume.types.ts(38,14): error TS2322: Type '"sword"' is not assignable to type '"dice" | "shard" | "camera" | "cup" | "blade" | "lantern"'.
+exit code: 1

@@ -1,0 +1,15 @@
+main: 39719 chars before, 39719 after, sha256 713ecc1b9ab39ec7 / 713ecc1b9ab39ec7
+  raw text IDENTICAL, no normalisation needed
+jsonld: 609 chars before, 609 after, sha256 678657cd732c137b / 678657cd732c137b
+  raw text IDENTICAL, no normalisation needed
+title: 36 chars before, 36 after, sha256 be5c97b6eaad484b / be5c97b6eaad484b
+  raw text IDENTICAL, no normalisation needed
+description: 133 chars before, 133 after, sha256 147389eb2b344a52 / 147389eb2b344a52
+  raw text IDENTICAL, no normalisation needed
+nav: 955 chars before, 955 after, sha256 14e9487a3f14295d / 14e9487a3f14295d
+  raw text IDENTICAL, no normalisation needed
+record-dialog-text: 1675 chars before, 1675 after, sha256 b64452cbcc1adeda / b64452cbcc1adeda
+  raw text IDENTICAL, no normalisation needed
+  record dialog open: before=True after=True
+
+RESULT: all captured text is identical

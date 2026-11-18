@@ -1,0 +1,4 @@
+== red (one directive removed: 'a role card needs roles') ==
+tests/resume.types.ts(14,14): error TS2322: Type '{ type: "role"; name: string; welcome: string; group: Group; kind: string; heading: string; link?: { href: string; label: string; } | undefined; lede: string; figures: ReadonlyArray<{ value: string; label: string; }>; deeds: ReadonlyArray<{ topic: string; items: readonly string[]; }>; stack: readonly string[]; }' is not assignable to type 'RoleCard'.
+  Property 'roles' is missing in type '{ type: "role"; name: string; welcome: string; group: Group; kind: string; heading: string; link?: { href: string; label: string; } | undefined; lede: string; figures: ReadonlyArray<{ value: string; label: string; }>; deeds: ReadonlyArray<{ topic: string; items: readonly string[]; }>; stack: readonly string[]; }' but required in type '{ type: "role"; roles: readonly [Role, ...Role[]]; }'.
+exit code: 1

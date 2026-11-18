@@ -1,0 +1,14 @@
+frame            before sha256 (16)  after sha256 (16)   bytes     differing px
+hero             2ccffb1bd0448589    2ccffb1bd0448589    IDENTICAL 0
+seat             cb41c7fb24be944c    cb41c7fb24be944c    IDENTICAL 0
+swarm            f5886c68f652d9ab    f5886c68f652d9ab    IDENTICAL 0
+chronicler       2c8765f8095090cc    2c8765f8095090cc    IDENTICAL 0
+courier          407dadb43fab2f45    407dadb43fab2f45    IDENTICAL 0
+artificer        73212de883a44634    73212de883a44634    IDENTICAL 0
+watchman         4487e9a70e6d09a7    4487e9a70e6d09a7    IDENTICAL 0
+study            85b662df21e5658c    85b662df21e5658c    IDENTICAL 0
+gate             bf0bf8312117da22    bf0bf8312117da22    IDENTICAL 0
+record-seat      63fef97ea3d1534c    63fef97ea3d1534c    IDENTICAL 0
+
+size of every frame: 1440x900, device pixel ratio 1, prefers-reduced-motion: reduce
+RESULT: all 10 frames are byte-identical before and after

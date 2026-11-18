@@ -1,0 +1,5 @@
+production prerendered / HTML: before 115182 bytes, after 115140 bytes
+markup with every <script> element removed: before 43899 chars, after 43899 chars, identical = True
+<script> elements: before 31, after 31, byte-identical 20
+the differing scripts are the chunk file name, the build id and the RSC payload of the sections (see RESULTS.md)
+JSON-LD in the production HTML: identical = True (609 chars); worksFor = {'@type': 'Organization', 'name': 'SockPuppet'}

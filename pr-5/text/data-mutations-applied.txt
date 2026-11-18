@@ -1,0 +1,7 @@
+M1 practice card gains `roles: []`
+M2 role card (chronicler) with `roles: []`
+M3 practice card loses `usedAt`
+M4 id renamed: watchman -> watchtower (one edit, in the data)
+M5 group `before` deleted from GROUPS
+M6 typo in a group field: glance -> glanse
+M7 relic id renamed: dice -> d20 (one edit, in the data)
